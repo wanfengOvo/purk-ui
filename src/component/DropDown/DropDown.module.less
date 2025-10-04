@@ -1,0 +1,115 @@
+// 首先，导入你的全局变量和 mixins
+@import '../../styles/variables.less';
+@import '../../styles/mixin.less';
+
+// Dropdown 容器
+.container {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+// 触发器区域
+.trigger {
+  user-select: none;
+}
+
+// 主菜单面板样式
+.menu {
+  position: absolute;
+  min-width: 200px;
+  z-index: 1000;
+  
+  // 主题化改造：使用深色背景和发光边框
+  background-color: fade(@darker-bg, 95%); // 使用更深的背景，并带一点透明度
+  backdrop-filter: blur(10px); // 添加流行的毛玻璃效果
+  border: 1px solid @primary-color;
+  border-radius: 4px;
+  padding: 0.5rem 0; // 使用 rem 单位
+  font-family: @font-family-main;
+  
+  // 主题化改造：应用边框发光效果
+  .border-glow(@primary-color);
+
+  // 动画效果
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform-origin: top left; // 定义动画的起点
+}
+
+// 菜单项的容器，用于子菜单的相对定位
+.menuItemWrapper {
+  position: relative;
+}
+
+// 单个菜单项样式
+.menuItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.25rem; // 使用 rem 单位
+  color: @primary-color; // 默认文字颜色
+  user-select: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  white-space: nowrap;
+  background-color: transparent;
+  border-left: 2px solid transparent; // 为 hover 和 active 状态准备
+
+  // 悬停状态 (非禁用时)
+  &:not(.disabled):hover {
+    color: @accent-color;
+    background-color: rgba(@accent-color, 0.1);
+    border-left-color: @accent-color;
+    .text-glow(@accent-color); // 应用文字发光效果
+  }
+
+  // 危险操作项
+  &.danger {
+    &:not(:hover) {
+       color: @accent-color;
+    }
+    
+    &:hover {
+      background-color: rgba(@accent-color, 0.2);
+      .text-glow(@accent-color);
+    }
+  }
+
+  // 禁用项
+  &.disabled {
+    color: rgba(@primary-color, 0.4); // 降低透明度
+    cursor: not-allowed;
+    background-color: transparent;
+    text-shadow: none; // 禁用时无发光
+  }
+}
+
+// 子菜单面板样式
+.submenu {
+  // Less 的 extend 功能，等同于 CSS Modules 的 composes
+  // 它会继承所有 .menu 的样式
+  &:extend(.menu); 
+  
+  top: -0.5rem; // 垂直对齐，抵消父菜单的 padding
+  left: 100%;
+  
+  // 为子菜单使用不同的颜色以作区分
+  border-color: @secondary-color;
+  .border-glow(@secondary-color);
+}
+
+// 菜单项中的箭头
+.arrow {
+  margin-left: 1rem;
+  font-size: 0.8em;
+  color: rgba(@primary-color, 0.6);
+  transition: transform 0.2s ease;
+
+  // 当父菜单项悬停时，箭头也做出反应
+  .menuItem:hover & {
+    color: @accent-color;
+    transform: translateX(3px);
+  }
+}

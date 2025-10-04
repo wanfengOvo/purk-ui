@@ -1,0 +1,19 @@
+.text-glow(@color: currentColor) {
+  text-shadow: 0 0 5px @color, 0 0 10px @color, 0 0 20px @color;
+}
+
+.border-glow(@color) {
+  box-shadow: 0 0 5px @color, 0 0 10px @color;
+}
+
+@keyframes glitch {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+}
+
+.glitch-effect() {
+  animation: glitch 0.3s ease infinite;
+}
