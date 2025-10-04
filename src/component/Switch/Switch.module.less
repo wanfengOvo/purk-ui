@@ -1,0 +1,92 @@
+// 假设这两个文件已成功引入，所有变量和 mixin 都可以直接使用
+@import '../../styles/variables.less';
+@import '../../styles/mixin.less';
+
+
+.switch {
+    display: inline-block; // 改为 inline-block 以适应内部布局
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    font-family: @font-family-main;
+    max-width: 260px;
+    align-self: flex-start;
+
+    // 禁用状态
+    &.disabled {
+        cursor: not-allowed;
+        filter: saturate(0) brightness(0.6); // 应用：使用滤镜实现更好的禁用效果
+    }
+}
+
+
+.small {
+    --switch-min-width: 50px;
+    --switch-height: 24px;
+}
+
+.medium {
+    --switch-min-width: 66px;
+    --switch-height: 32px;
+}
+
+.large {
+    --switch-min-width: 88px;
+    --switch-height: 40px;
+}
+
+// 开关轨道
+.switchTrack {
+
+    width: auto;
+    min-width: var(--switch-min-width); // 使用最小宽度变量
+    height: var(--switch-height);
+    background-color: @dark-bg;
+    border: 1px solid fade(@primary-color, 30%);
+    border-radius: var(--switch-height);
+    position: relative;
+    transition: all 0.3s ease-in-out;
+    display: flex; // 使用 flex 布局
+    align-items: center;
+
+    &.active {
+        background-color: fade(@primary-color, 20%);
+        .border-glow(@primary-color);
+    }
+}
+
+// 开关滑块
+.switchThumb {
+    --padding: 2px;
+    --thumb-size: calc(var(--switch-height) - 2 * var(--padding));
+    box-sizing: border-box;
+    position: absolute;
+    top: var(--padding);
+    left: var(--padding);
+    width: var(--thumb-size);
+    height: var(--thumb-size);
+    background-color: @darker-bg;
+    border: 1px solid @primary-color;
+    border-radius: 50%;
+    transition: all 0.3s ease-in-out;
+    .border-glow(fade(@primary-color, 70%));
+
+    &.active {
+        left: calc(100% - var(--thumb-size) - var(--padding));
+        background-color: @primary-color;
+        .border-glow(@highlight-color);
+    }
+}
+
+.switchInner {
+    color: white;
+    font-size: calc(var(--switch-height) * 0.45);
+    font-weight: bold;
+    padding: 0 8px;
+    padding-left: var(--switch-height);
+
+    .switchTrack.active & {
+        padding-left: 8px;
+        padding-right: var(--switch-height);
+    }
+}

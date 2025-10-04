@@ -1,6 +1,7 @@
 import React from 'react';
 import Dropdown, { MenuItem } from './component/DropDown/DropDown';
 import './App.css';
+import ExampleSwitch from './component/Switch/Example/ExampleSwitch';
 
 function App() {
   // 定义多层嵌套菜单项
@@ -77,42 +78,7 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Dropdown 多层嵌套菜单示例</h1>
-      
-      {/* 更复杂的嵌套菜单 - 悬停触发 */}
-      <div style={{ margin: '20px' }}>
-        <Dropdown 
-          menuItems={menuItems} 
-          placement="bottomLeft"
-          trigger="hover"
-        >
-          <button>悬停显示多层嵌套菜单</button>
-        </Dropdown>
-      </div>
-      
-      {/* 更复杂的嵌套菜单 - 点击触发 */}
-      <div style={{ margin: '20px' }}>
-        <Dropdown 
-          menuItems={menuItems} 
-          placement="bottomLeft"
-          trigger="click"
-        >
-          <button>点击显示多层嵌套菜单</button>
-        </Dropdown>
-      </div>
-      
-      {/* 不同位置的菜单示例 */}
-      <div style={{ margin: '20px' }}>
-        <Dropdown 
-          menuItems={menuItems} 
-          placement="bottomRight"
-          trigger="click"
-          offsetX={10}
-          offsetY={5}
-        >
-          <button>右对齐菜单</button>
-        </Dropdown>
-      </div>
+      <ExampleSwitch />
     </div>
   );
 }
