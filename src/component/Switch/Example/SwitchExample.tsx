@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import Switch from '../Switch';
-import styles from './ExampleSwitch.module.less';
+import styles from './SwitchExample.module.less';
 
-const ExampleSwitch: React.FC = () => {
+const SwitchExample: React.FC = () => {
   const [controlledChecked, setControlledChecked] = useState(false);
   
   const handleSwitchChange = (checked: boolean) => {
@@ -77,4 +77,4 @@ const ExampleSwitch: React.FC = () => {
   );
 };
 
-export default ExampleSwitch;
+export default SwitchExample;

@@ -1,0 +1,124 @@
+@import '../../styles/variables.less';
+@import '../../styles/mixin.less';
+
+.inputWrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    background-color: @dark-bg;
+    border: 1px solid fade(@primary-color, 30%);
+    border-radius: 4px;
+    transition: all 0.3s ease-in-out;
+    font-family: @font-family-main;
+    
+    // 输入框聚焦时的样式
+    &:focus-within {
+        border-color: @primary-color;
+        .border-glow(@primary-color);
+    }
+    
+    // 不同状态的边框颜色
+    &.success {
+        border-color: #52c41a; // 成功状态通常用绿色
+        &:focus-within { .border-glow(#52c41a); }
+    }
+    &.warning {
+        border-color: #faad14; // 警告用橙色
+        &:focus-within { .border-glow(#faad14); }
+    }
+    &.error {
+        border-color: @accent-color; // 错误用设计系统中的强调色
+        &:focus-within { .border-glow(@accent-color); }
+    }
+    
+    // 禁用状态
+    &.disabled {
+        cursor: not-allowed;
+        background-color: @darker-bg;
+        filter: saturate(0) brightness(0.8);
+        
+        .inputElement {
+            cursor: not-allowed;
+        }
+    }
+
+    &.isTextarea {
+        height: 100%;
+        align-items: flex-start;
+    }
+}
+
+// 尺寸变量
+.small {
+    &:not(.isTextarea) {
+        height: 28px;
+    }
+    font-size: 12px;
+}
+.medium {
+    &:not(.isTextarea) {
+        height: 36px;
+    }
+    font-size: 14px;
+}
+.large {
+    &:not(.isTextarea) {
+        height: 44px;
+    }
+    font-size: 16px;
+}
+
+// 前后缀的通用样式
+.prefix, .suffix, .passwordIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    color: fade(@primary-color, 70%);
+    align-self: stretch; 
+}
+
+.passwordIcon {
+    cursor: pointer;
+}
+
+// 核心输入框/文本域元素
+.inputElement {
+    flex: 1;
+    width: 100%;
+    height: 100%; 
+    padding: 0 10px;
+    border: none;
+    outline: none;
+    background-color: transparent; // 背景透明，继承父容器
+    color: @primary-color;
+    font-family: inherit; // 继承字体
+    
+    &::placeholder {
+        color: fade(@primary-color, 40%);
+        .text-glow(fade(@primary-color, 20%));
+    }
+    
+    .inputWrapper.isTextarea & {
+        padding: 8px 10px;
+        resize: vertical;
+        line-height: 1.5;
+        
+        .inputWrapper.small & { min-height: 60px; }
+        .inputWrapper.medium & { min-height: 90px; }
+        .inputWrapper.large & { min-height: 120px; }
+    }
+}
+
+// 如果有前缀，输入框需要一个左内边距
+.prefix + .inputElement {
+    padding-left: 0;
+}
+
+// 如果有后缀，输入框需要一个右内边距
+.inputElement + .suffix,
+.inputElement + .passwordIcon {
+    padding-right: 0;
+}

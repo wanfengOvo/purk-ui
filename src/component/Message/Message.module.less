@@ -1,0 +1,171 @@
+@import '../../styles/variables.less';
+@import '../../styles/mixin.less';
+
+
+@keyframes pulse-glow-primary {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(0, 240, 255, 0.5), 0 0 15px rgba(0, 240, 255, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.7), 0 0 25px rgba(0, 240, 255, 0.9);
+  }
+}
+
+// 定义颜色变量
+@success-color: #39ff14;         // 霓虹绿，用于成功状态
+@info-color: #17a2b8;            // 青色，用于信息状态
+@success-color-glow: rgba(57, 255, 20, 0.75);
+@info-color-glow: rgba(23, 162, 184, 0.75);
+@font-family-main: 'Orbitron', 'Exo 2', 'BlenderPro', 'Rajdhani', sans-serif;
+@punk-transition-duration: 0.3s;
+@primary-color-glow: rgba(0, 240, 255, 0.75);
+@accent-color-glow: rgba(255, 0, 128, 0.75);
+@highlight-color-glow: rgba(249, 255, 0, 0.7);
+@content-color: #EAEAEA;
+@close-color: #909399;
+
+.punkMessage {
+  // 其他变量保持不变
+  --success-color: @success-color;
+  --info-color: @info-color;
+  --success-color-glow: @success-color-glow;
+  --info-color-glow: @info-color-glow;
+  --primary-color: @primary-color;
+  --accent-color: @accent-color;
+  --highlight-color: @highlight-color;
+  --dark-bg: @dark-bg;
+  --font-family-main: @font-family-main;
+  --punk-transition-duration: @punk-transition-duration;
+  --primary-color-glow: @primary-color-glow;
+  --accent-color-glow: @accent-color-glow;
+  --highlight-color-glow: @highlight-color-glow;
+
+  // 基础样式保持不变
+  position: fixed;
+  left: 50%;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  box-sizing: border-box;
+  padding: 15px 19px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-family-main);
+  background-color: var(--dark-bg);
+  border: 1px solid;
+  border-radius: 4px;
+  opacity: 0;
+  transition: top var(--punk-transition-duration) ease-in-out,
+              bottom var(--punk-transition-duration) ease-in-out,
+              opacity var(--punk-transition-duration) ease-in-out,
+              transform var(--punk-transition-duration) ease-in-out;
+  
+  // 动画状态
+  &.top { 
+    transform: translate(-50%, -100%); 
+  }
+  
+  &.bottom { 
+    transform: translate(-50%, 100%); 
+  }
+  
+  &.visible { 
+    opacity: 1; 
+    transform: translate(-50%, 0); 
+  }
+
+  // ✨ REVISED: Success 和 Info 使用对比鲜明的颜色
+  // Success - 霓虹绿
+  &.success {
+    border-color: var(--success-color);
+    box-shadow: 0 0 4px rgba(57, 255, 20, 0.5), 0 0 15px rgba(57, 255, 20, 0.7);
+    
+    .icon {
+      color: var(--success-color);
+      text-shadow: 0 0 6px var(--success-color-glow);
+    }
+  }
+
+  // Info - 青色
+  &.info {
+    border-color: var(--info-color);
+    box-shadow: 0 0 4px rgba(23, 162, 184, 0.5), 0 0 15px rgba(23, 162, 184, 0.7);
+    
+    .icon {
+      color: var(--info-color);
+      text-shadow: 0 0 6px var(--info-color-glow);
+    }
+  }
+
+  // Warning - 亮黄 (保持不变)
+  &.warning {
+    border-color: var(--highlight-color);
+    box-shadow: 0 0 4px rgba(249, 255, 0, 0.5), 0 0 15px rgba(249, 255, 0, 0.7);
+    
+    .icon {
+      color: var(--highlight-color);
+      text-shadow: 0 0 6px var(--highlight-color-glow);
+    }
+  }
+
+  // Error - 品红 (保持不变)
+  &.error {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 4px rgba(255, 0, 128, 0.5), 0 0 15px rgba(255, 0, 128, 0.7);
+    
+    .icon {
+      color: var(--accent-color);
+      text-shadow: 0 0 6px var(--accent-color-glow);
+    }
+  }
+
+  // Loading - 默认使用 primary-color 青色 (保持不变)
+  &.loading {
+    border-color: var(--primary-color);
+    animation: pulse-glow-primary 2s infinite ease-in-out;
+    
+    .icon {
+      color: var(--primary-color);
+      text-shadow: 0 0 6px var(--primary-color-glow);
+    }
+  }
+
+  // 内部元素样式
+  .icon {
+    font-size: 16px;
+    margin-right: 12px;
+    width: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .loadingIcon { 
+    &:extend(.icon); 
+  }
+  
+  .content {
+    font-size: 14px;
+    word-break: break-word;
+    color: @content-color;
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.2);
+  }
+  
+  &.closable {
+    .content { 
+      padding-right: 10px; 
+    }
+  }
+  
+  .close {
+    color: @close-color;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      color: var(--primary-color);
+      text-shadow: 0 0 8px var(--primary-color-glow);
+    }
+  }
+}
