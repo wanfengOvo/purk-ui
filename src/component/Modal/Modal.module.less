@@ -1,0 +1,148 @@
+@import '../../styles/variables.less';
+
+
+.mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: fade(@darker-bg, 75%);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+}
+
+.wrapper {
+}
+
+.modalContent {
+    font-family: @font-family-main;
+    border: 1px solid @primary-color;
+    border-radius: 4px;
+    box-shadow: 0 0 12px fade(@primary-color-glow, 90%), inset 0 0 4px fade(@primary-color-glow, 30%);
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    max-width: 520px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    animation: fadeIn 0.5s ease-out;
+
+    background-color: fade(@dark-bg, 80%);
+
+    background-image: radial-gradient(ellipse 80% 70% at 50% 120%, // Shape and position the glow at the bottom
+            fade(@secondary-color-glow, 50%), // Use your secondary glow color
+            transparent);
+    backdrop-filter: blur(16px);
+
+    @supports not (backdrop-filter: blur(16px)) {
+        background-color: @dark-bg;
+    }
+   
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+  
+    border-bottom: 1px solid fade(@primary-color, 40%);
+    background-color: transparent;
+}
+
+.title {
+    font-size: @font-size-large;
+    font-weight: 600;
+    // 1. FIX: Changed color from yellow to the primary cyan for better contrast and harmony.
+    color: @primary-color;
+    // Adjusted the text-shadow to match the new color.
+    text-shadow: 0 0 6px @primary-color-glow;
+}
+
+.closeButton {
+    cursor: pointer;
+    font-size: 28px;
+    color: @close-color;
+    line-height: 1;
+    text-shadow: none;
+    transition: all @punk-transition-duration ease;
+
+    &:hover {
+        color: @accent-color;
+        text-shadow: 0 0 10px @accent-color-glow;
+        transform: rotate(90deg) scale(1.1);
+    }
+}
+
+.modalBody {
+    padding: 24px;
+    font-size: @font-size-middle;
+    line-height: 1.6;
+    overflow-y: auto;
+    color: @success-color;
+    text-shadow:
+        0px 0px 2px @darker-bg,
+        0 0 5px @success-color,
+        0 0 12px @success-color-glow;
+}
+
+.modalFooter {
+    padding: 12px 16px;
+    text-align: right;
+    margin-top: auto; // Pushes footer to the bottom
+    background-color: transparent; // Let the gradient show through
+    // REFINED BORDER: Unified the border style with the header
+    border-top: 1px solid fade(@primary-color, 40%);
+
+    &>button {
+        margin-left: 12px;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+.skeletonWrapper {
+    padding: 8px 0;
+}
+
+.skeletonLine {
+    height: 18px;
+    margin-bottom: 16px;
+    border-radius: 4px;
+    background: linear-gradient(90deg,
+            fade(@secondary-color, 15%) 25%,
+            fade(@secondary-color, 30%) 50%,
+            fade(@secondary-color, 15%) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}

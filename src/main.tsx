@@ -14,6 +14,5 @@ createRoot(document.getElementById('root')!).render(
     <MessageProvider>
       <App />
     </MessageProvider>
-
-  </StrictMode>,
+  </StrictMode>
 )

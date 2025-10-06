@@ -1,0 +1,125 @@
+
+@import '../../styles/variables.less';
+@import '../../styles/mixin.less';
+
+// --- Base Button Styles ---
+.button {
+    font-family: @font-family-main;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 2px solid; 
+    padding: 0 20px;
+    background-color: @darker-bg;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: 700;
+    transition: all @punk-transition-duration ease;
+    outline: none;
+    text-decoration: none;
+
+
+    box-shadow: 0 0 8px fade(@primary-color-glow, 40%);
+
+    clip-path: polygon(0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px));
+
+    &:not([disabled]):hover {
+        transform: translateY(-2px);
+        background-color: lighten(@darker-bg, 5%);
+    }
+
+    &:not([disabled]):active {
+        transform: translateY(0);
+    }
+
+    &[disabled] {
+        cursor: not-allowed;
+        background-color: fade(@darker-bg, 30%);
+        border-color: @close-color !important;
+        color: @close-color !important;
+        text-shadow: none !important;
+        box-shadow: none !important;
+    }
+
+    .icon + span,
+    .loadingIcon + span {
+        margin-left: 10px;
+    }
+}
+
+// --- Glow Effect Mixin ---
+.glow-style(@color, @glow-color) {
+    color: @color;
+    border-color: @color;
+    text-shadow: 0 0 4px @color, 0 0 10px @glow-color;
+    box-shadow: 0 0 8px fade(@glow-color, 60%);
+
+    &:not([disabled]):hover {
+        box-shadow: 0 0 20px @glow-color, inset 0 0 10px fade(@glow-color, 50%);
+        text-shadow: 0 0 6px @color, 0 0 15px @glow-color, 0 0 2px #fff;
+    }
+}
+// --- Color Variants ---
+.btn-default { .glow-style(@content-color, @highlight-color-glow); }
+.btn-primary { .glow-style(@primary-color, @primary-color-glow); }
+.btn-danger { .glow-style(@accent-color, @accent-color-glow); }
+.btn-success { .glow-style(@success-color, @success-color-glow); }
+.btn-info { .glow-style(@info-color, @info-color-glow); }
+.btn-link { .glow-style(@link-color, @link-color-glow); }// 使用亮橙色
+.btn-text { .glow-style(@secondary-color, @secondary-color-glow); }  //使用亮紫色
+
+
+
+
+
+
+
+.btn-large { 
+    height: 48px; 
+    font-size: 18px; 
+}
+.btn-middle { 
+    height: 40px; 
+    font-size: 16px; 
+}
+.btn-small { 
+    height: 32px; 
+    font-size: 14px; 
+    clip-path: polygon(0 5px, 5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px));
+}
+
+
+.btn-round {
+    clip-path: none;
+    border-radius: 50px;
+}
+.btn-circle {
+    clip-path: none;
+    border-radius: 50%;
+    
+    &.btn-large { width: 48px; padding: 0; }
+    &.btn-middle { width: 40px; padding: 0; }
+    &.btn-small { width: 32px; padding: 0; }
+}
+
+
+.loadingIcon {
+    display: inline-flex;
+    align-items: center;
+}
+.loadingSpinner {
+    display: block;
+    width: 1em; 
+    height: 1em;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
