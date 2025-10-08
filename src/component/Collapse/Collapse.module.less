@@ -1,0 +1,138 @@
+@import '../../styles/variables.less';
+
+.collapseContainer {
+  background-color: @dark-bg;
+  border-radius: 4px;
+  overflow: hidden;
+  font-family: @font-family-main;
+  border: 1px solid @primary-color;
+  box-shadow: 0 0 5px @primary-color-glow, 0 0 10px @primary-color-glow inset;
+  color: @content-color;
+}
+
+
+.collapseItem {
+  // 使用次要颜色的辉光作为分割线，比实线更柔和且符合主题
+  border-bottom: 1px solid @secondary-color-glow;
+  // 最后一个子项不需要分割线
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+
+.collapseHeader {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  // 使用更深的背景色，与容器形成层次感
+  background-color: @darker-bg;
+  font-weight: 500;
+  font-size: @font-size-middle;
+  transition: all @punk-transition-duration ease;
+  user-select: none; // 禁止选中文本，提升体验
+
+  // 悬停时，文字变为主题色并产生辉光
+  &:hover {
+    color: @primary-color;
+    text-shadow: 0 0 8px @primary-color-glow;
+  }
+}
+
+
+.collapseArrow {
+  // 隐藏原始的 border 箭头
+  border: none;
+  width: 12px;
+  height: 12px;
+  margin-right: 12px;
+  position: relative;
+  
+  // 使用 ::before 伪元素创建一个更现代的 ">" 箭头
+  &::before {
+    content: '>';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    color: @secondary-color; // 默认使用次要颜色
+    font-weight: bold;
+    transform: translate(-50%, -50%) rotate(0deg);
+    transition: transform @punk-transition-duration ease, color @punk-transition-duration ease;
+  }
+}
+
+
+.active {
+  > .collapseHeader {
+    color: @primary-color;
+    text-shadow: 0 0 8px @primary-color-glow;
+    > .collapseArrow::before {
+      color: @primary-color;
+      transform: translate(-50%, -50%) rotate(90deg);
+    }
+  }
+}
+
+
+.disabled {
+  .collapseHeader {
+    cursor: not-allowed;
+    color: @close-color; // 使用禁用状态的颜色变量
+    background-color: lighten(@darker-bg, 5%); // 背景稍微提亮以示区别
+
+    // 禁用时移除悬停效果
+    &:hover {
+      color: @close-color;
+      text-shadow: none;
+    }
+
+    // 禁用时箭头也变灰
+    .collapseArrow::before {
+      color: @close-color;
+    }
+  }
+}
+
+
+.collapseContentWrapper {
+  display: grid;
+  grid-template-rows: 0fr; 
+  transition: grid-template-rows @punk-transition-duration ease-out;
+  background-color: @darker-bg;
+}
+
+// 当折叠项激活时，内容展开
+.active > .collapseContentWrapper {
+  grid-template-rows: 1fr;
+  border-top: 1px solid @primary-color-glow;
+}
+
+
+.collapseContent {
+ 
+  // 这个属性是 grid 动画生效的关键
+  overflow: hidden;
+  font-size: @font-size-small;
+  line-height: 1.6;
+
+
+  // 嵌套的 Collapse 样式
+  .collapseContainer {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border-radius: 3px;
+    border: 1px solid @secondary-color;
+    box-shadow: 0 0 5px @secondary-color-glow, 0 0 8px @secondary-color-glow inset;
+  }
+}
+
+.collapseContentPadding {
+  padding: 16px;
+}
+
+.collapseCustomIcon {
+  display: inline-flex; 
+  align-items: center;
+  margin-right: 12px; 
+}

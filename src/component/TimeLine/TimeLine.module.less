@@ -1,0 +1,124 @@
+
+@import '../../styles/variables.less';
+
+
+// 组件局部变量 
+@timeline-item-padding-bottom: 24px;
+@timeline-head-width: 24px; // 节点容器宽度
+@timeline-tail-width: 2px; // 轴线宽度
+
+.timeline {
+    padding: 10px;
+    font-family: @font-family-main;
+
+    ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .timelineItem {
+        position: relative;
+        padding-bottom: @timeline-item-padding-bottom;
+        
+        .timelineItemTail {
+            position: absolute; top: 12px; height: calc(100% - 10px);
+            border-left: @timeline-tail-width solid @secondary-color;
+            box-shadow: 0 0 8px @secondary-color-glow;
+            transition: border-color @punk-transition-duration ease;
+        }
+
+        .timelineItemHead {
+            position: absolute; top: 0; width: @timeline-head-width; height: @timeline-head-width;
+            display: flex; align-items: center; justify-content: center;
+            color: @primary-color; border-color: @primary-color;
+            transition: all @punk-transition-duration ease;
+        }
+
+        .timelineItemDot {
+            width: 12px; height: 12px; border: 2px solid currentColor;
+            border-radius: 50%; background-color: @darker-bg;
+            box-shadow: 0 0 10px currentColor, inset 0 0 6px currentColor;
+            transition: all @punk-transition-duration ease;
+        }
+        
+        .timelineItemLabel {
+            position: relative; top: -3px; color: @primary-color; font-size: @font-size-middle;
+            text-shadow: 0 0 6px @primary-color-glow; margin-bottom: 8px;
+        }
+
+        .timelineItemContent {
+            position: relative;
+            top: -3px;
+            word-break: break-word;
+        }
+
+        &.timelineItemLast .timelineItemTail { display: none; }
+
+        &:has(.timelineItemHead:hover),
+        &:has(.timelineItemTail:hover) {
+            .timelineItemHead { transform: scale(1.1); }
+            .timelineItemDot { box-shadow: 0 0 15px currentColor, inset 0 0 8px currentColor; }
+            .timelineItemTail { border-left-color: @highlight-color; box-shadow: 0 0 12px @highlight-color-glow; }
+        }
+    }
+
+    &.timeline-left {
+        .timelineItem, .timelineItemPending {
+            .timelineItemHead { left: 0; }
+            .timelineItemTail { left: (@timeline-head-width / 2) - (@timeline-tail-width / 2); }
+            .timelineItemContent, .timelineItemLabel { margin-left: 40px; }
+        }
+    }
+
+    &.timeline-right {
+        .timelineItem, .timelineItemPending {
+            text-align: right;
+            .timelineItemHead { right: 0; }
+            .timelineItemTail { right: (@timeline-head-width / 2) - (@timeline-tail-width / 2); }
+            .timelineItemContent, .timelineItemLabel { margin-right: 40px; }
+        }
+    }
+
+    &.timeline-alternate {
+        .timelineItemTail { left: 50%; margin-left: -(@timeline-tail-width / 2); }
+        .timelineItem {
+            &.timelineItemLeft, &.timelineItemRight {
+                .timelineItemHead { left: 50%; margin-left: -(@timeline-head-width / 2); }
+            }
+            &.timelineItemLeft {
+                text-align: right;
+                .timelineItemContent, .timelineItemLabel { width: calc(50% - 30px); margin-right: 30px; }
+            }
+            &.timelineItemRight {
+                .timelineItemContent, .timelineItemLabel { width: calc(50% - 30px); margin-left: calc(50% + 30px); }
+            }
+        }
+        .timelineItemPending {
+            .timelineItemHead { left: 50%; margin-left: -(@timeline-head-width / 2); }
+            .timelineItemTail { left: 50%; margin-left: -(@timeline-tail-width / 2); }
+            .timelineItemContent { width: calc(50% - 30px); margin-left: calc(50% + 30px); }
+        }
+    }
+    
+
+    .timelineItemPending {
+        .timelineItemTail { border-left-style: dashed; box-shadow: none !important; }
+        .timelineItemHead { color: @close-color !important; }
+        .timelineItemHead .timelineItemDot {
+            border-color: @close-color;
+            box-shadow: none;
+            background-color: transparent;
+            animation: spin 1.5s linear infinite;
+        }
+        .timelineItemContent {
+            color: @close-color;
+            text-shadow: none;
+        }
+    }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(30deg); }
+}
