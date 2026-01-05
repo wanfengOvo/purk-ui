@@ -1,228 +1,127 @@
-import './styles/global.less'
-import { Collapse, type CollapseItemType } from './component/Collapse/Collapse';
-
-export default function App() {
-  const complexContent = (
-    <div>
-      <p>这里可以是任意 JSX 内容。</p>
-      <p>比如图片、按钮、或者其他组件。</p>
-      <button onClick={() => alert('Clicked!')} style={{ padding: '5px 10px' }}>
-        点我
-      </button>
-    </div>
-  );
-
-  // 定义要渲染的数据数组
-  const myItems: CollapseItemType[] = [
+import React, { useState } from 'react';
+import Tree, { type TreeDataItem } from './component/Tree/Tree';
+const App: React.FC = () => {
+  const initialData: TreeDataItem[] = [
     {
-      key: '1',
-      label: <strong>面板标题 1 (加粗)</strong>,
-      children: <p>这是面板 1 的内容。</p>,
+      title: '用户权限管理',
+      key: '0-0',
+      children: [
+        {
+          title: '管理员设置',
+          key: '0-0-0',
+          children: [
+            { title: '新增用户', key: '0-0-0-0' },
+            { title: '禁用用户 (不可选)', key: '0-0-0-1', disabled: true },
+            { title: '角色分配', key: '0-0-0-2' },
+          ],
+        },
+        {
+          title: '审计日志',
+          key: '0-0-1',
+        },
+      ],
     },
     {
-      key: '2',
-      label: '面板标题 2',
-      children: complexContent, // 这里传入了复杂的 React 节点
-    },
-    {
-      key: '3',
-      label: '禁用的面板',
-      children: <p>这段内容默认不可见。</p>,
-      disabled: true,
+      title: '系统监控',
+      key: '0-1',
+      children: [
+        { title: 'CPU 负载', key: '0-1-0' },
+        { title: '内存占用', key: '0-1-1' },
+      ],
     },
   ];
-  
-  const handleCollapseChange = (keys: string | string[]) => {
-    console.log('当前激活的面板 key:', keys);
-  };
 
-  // 嵌套面板数据
-  const nestedItems: CollapseItemType[] = [
-    {
-      key: 'parent-1',
-      label: '父级面板 1',
-      children: (
-        <div>
-          <p>这是父级面板 1 的内容。</p>
-          <Collapse
-            items={[
-              {
-                key: 'child-1-1',
-                label: '子面板 1-1',
-                children: (
-                  <div>
-                    <p>这是嵌套在父级面板 1 中的子面板 1-1 的内容。</p>
-                    <Collapse
-                      items={[
-                        {
-                          key: 'grandchild-1-1-1',
-                          label: '孙面板 1-1-1',
-                          children: <p>这是三级嵌套面板的内容</p>
-                        },
-                        {
-                          key: 'grandchild-1-1-2',
-                          label: '孙面板 1-1-2',
-                          children: <p>另一个三级嵌套面板的内容</p>
-                        }
-                      ]}
-                      defaultActiveKey="grandchild-1-1-1"
-                    />
-                  </div>
-                )
-              },
-              {
-                key: 'child-1-2',
-                label: '子面板 1-2',
-                children: <p>这是嵌套在父级面板 1 中的子面板 1-2 的内容。</p>
-              }
-            ]}
-            defaultActiveKey="child-1-1"
-          />
-        </div>
-      )
-    },
-    {
-      key: 'parent-2',
-      label: '父级面板 2',
-      children: (
-        <div>
-          <p>这是父级面板 2 的内容。</p>
-          <Collapse
-            items={[
-              {
-                key: 'child-2-1',
-                label: '子面板 2-1',
-                children: (
-                  <div>
-                    <p>这是嵌套在父级面板 2 中的子面板 2-1 的内容。</p>
-                    <Collapse
-                      items={[
-                        {
-                          key: 'grandchild-2-1-1',
-                          label: '孙面板 2-1-1',
-                          children: (
-                            <Collapse
-                              items={[
-                                {
-                                  key: 'great-grandchild-2-1-1-1',
-                                  label: '曾孙面板 2-1-1-1',
-                                  children: <p>这是四级嵌套面板的内容</p>
-                                }
-                              ]}
-                            />
-                          )
-                        }
-                      ]}
-                    />
-                  </div>
-                )
-              }
-            ]}
-          />
-        </div>
-      )
-    },
-    {
-      key: 'parent-3',
-      label: '复杂内容面板',
-      children: (
-        <div>
-          <p>这个面板包含复杂的内容和嵌套面板：</p>
-          <ul>
-            <li>列表项 1</li>
-            <li>列表项 2</li>
-            <li>列表项 3</li>
-          </ul>
-          <Collapse
-            items={[
-              {
-                key: 'complex-child-1',
-                label: '嵌套面板',
-                children: (
-                  <div>
-                    <button onClick={() => alert('按钮被点击了！')}>交互按钮</button>
-                    <p>嵌套面板中的内容</p>
-                  </div>
-                )
-              }
-            ]}
-          />
-        </div>
-      )
-    }
-  ];
+  const [gData, setGData] = useState<TreeDataItem[]>(initialData);
 
-  // 自定义展开图标函数
-  const customExpandIcon = ({ isActive }: { isActive: boolean }) => {
-    const style = {
-      transition: 'transform 0.2s ease-in-out',
-      transform: isActive ? 'rotate(45deg)' : 'rotate(0deg)',
-      color: isActive ? '#00f0ff' : '#d900ff', // 激活时用主色，否则用次要颜色
-      marginRight: '4px', // 给图标一点额外空间
-      display: 'inline-block',
-      fontSize: '18px',
-      fontWeight: 'bold'
+  // 辅助函数：在树中查找并操作节点
+  const onDrop = (info: any) => {
+    const { dragNode, node, dropPosition, dropToGap } = info;
+    const dragKey = dragNode.key;
+    const dropKey = node.key;
+
+    // 1. 深度拷贝数据，避免引用污染
+    const data = JSON.parse(JSON.stringify(gData));
+
+    // 2. 查找并移除被拖拽的节点
+    let dragObj: TreeDataItem | undefined;
+
+    const removeNode = (list: TreeDataItem[], key: string | number) => {
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].key === key) {
+          dragObj = list[i];
+          list.splice(i, 1);
+          return true;
+        }
+        if (list[i].children && removeNode(list[i].children!, key)) {
+          return true;
+        }
+      }
+      return false;
     };
-    return <span style={style}>+</span>; // 用一个简单的 '+' 作为例子
-  };
 
-  // 使用自定义图标的面板数据
-  const customIconItems: CollapseItemType[] = [
-    {
-      key: 'custom-1',
-      label: '自定义图标面板 1',
-      children: <p>这个面板使用了自定义的展开图标。</p>,
-      showArrow: true
-    },
-    {
-      key: 'custom-2',
-      label: '无图标面板',
-      children: <p>这个面板没有展开图标。</p>,
-      showArrow: false
-    },
-    {
-      key: 'custom-3',
-      label: '另一个自定义图标面板',
-      children: (
-        <div>
-          <p>这个面板也使用了自定义图标，并且包含嵌套面板：</p>
-          <Collapse
-            items={[
-              {
-                key: 'nested-custom-1',
-                label: '嵌套面板',
-                children: <p>嵌套面板内容</p>
-              }
-            ]}
-            expandIcon={customExpandIcon}
-          />
-        </div>
-      ),
-      showArrow: true
+    removeNode(data, dragKey);
+    if (!dragObj) return;
+
+    // 3. 插入节点到新位置
+    if (!dropToGap) {
+      // 插入到节点内部
+      const addNodeInside = (list: TreeDataItem[], key: string | number) => {
+        for (let i = 0; i < list.length; i++) {
+          if (list[i].key === key) {
+            list[i].children = list[i].children || [];
+            list[i].children!.push(dragObj!);
+            return true;
+          }
+          if (list[i].children && addNodeInside(list[i].children!, key)) {
+            return true;
+          }
+        }
+        return false;
+      }
+      addNodeInside(data, dropKey);
+    } else {
+      // 插入到节点上方或下方（关键：这使得节点可以移动到父级同层）
+      const addNodeAtGap = (list: TreeDataItem[], key: string | number) => {
+        for (let i = 0; i < list.length; i++) {
+          if (list[i].key === key) {
+            const index = dropPosition === -1 ? i : i + 1;
+            list.splice(index, 0, dragObj!);
+            return true;
+          }
+          if (list[i].children && addNodeAtGap(list[i].children!, key)) {
+            return true;
+          }
+        }
+        return false;
+      }
+      addNodeAtGap(data, dropKey);
     }
-  ];
+
+    setGData(data);
+  };
 
   return (
-    <div>
-      <h2>数据驱动的 Collapse 组件</h2>
-      <Collapse
-        items={myItems}
-        defaultActiveKey="1"
-        onChange={handleCollapseChange}
-      />
-
-      <h2 style={{ marginTop: '30px' }}>嵌套面板</h2>
-      <Collapse
-        items={nestedItems}
-        defaultActiveKey="parent-1"
-      />
-
-      <h2 style={{ marginTop: '30px' }}>自定义图标面板</h2>
-      <Collapse
-        items={customIconItems}
-        defaultActiveKey="custom-1"
-        expandIcon={customExpandIcon}
-      />
+    <div style={{ padding: '40px' }}>
+      <h3 style={{ marginBottom: '20px' }}>可拖拽层级树 (修复版)</h3>
+      <div style={{
+        border: '1px solid #d9d9d9',
+        borderRadius: '4px',
+        padding: '20px',
+        background: '#fff',
+        width: '500px'
+      }}>
+        <Tree
+          data={gData}
+          checkbox
+          draggable
+          onDrop={onDrop}
+        />
+      </div>
+      <div style={{ marginTop: '20px', color: '#666', fontSize: '14px' }}>
+        提示：拖拽至标题<strong>中间</strong>变为子节点，拖拽至标题<strong>边缘</strong>进行同级排序或跨层级移动。
+      </div>
     </div>
   );
-}
+};
+
+export default App;

@@ -1,0 +1,115 @@
+.tree-container {
+  user-select: none;
+}
+
+.tree-node-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.tree-node {
+  position: relative; // 关键：用于定位拖拽指示线
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  height: 28px; // 固定高度方便计算拖拽位置
+  line-height: 28px;
+  border: 1px solid transparent; // 预留边框位置
+
+  &:hover {
+    background-color: #f5f5f5;
+  }
+}
+
+.tree-node-active {
+  background-color: #e6f7ff;
+}
+
+.tree-node-disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.tree-checkbox {
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  background: #fff;
+}
+
+.tree-checkbox-checked {
+  background-color: #1890ff;
+  border-color: #1890ff;
+  color: #fff;
+}
+
+.tree-checkbox-disabled {
+  background-color: #f5f5f5;
+  border-color: #d9d9d9;
+  color: #ccc;
+}
+
+.tree-node-icon {
+  margin-right: 6px;
+  font-size: 10px;
+  transition: transform 0.2s;
+  display: inline-block;
+  width: 16px;
+  text-align: center;
+}
+
+.tree-node-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.tree-node-custom-icon {
+  margin-right: 6px;
+}
+
+.tree-children {
+  overflow: hidden;
+  height: 0;
+  transition: height 0.2s ease-in-out;
+}
+
+.tree-children-open {
+  height: auto;
+}
+
+/* --- 新增：拖拽相关样式 --- */
+
+// 拖拽放入内部的高亮
+.drag-over {
+  background-color: #f0f0f0; 
+  border: 1px dashed #1890ff;
+}
+
+// 拖拽放入上方的指示线
+.drag-over-gap-top::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #1890ff;
+  z-index: 1;
+}
+
+// 拖拽放入下方的指示线
+.drag-over-gap-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #1890ff;
+  z-index: 1;
+}
