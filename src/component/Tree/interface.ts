@@ -6,19 +6,13 @@ export interface TreeDataItem {
     children?: TreeDataItem[];
     disabled?: boolean;
     icon?: ReactNode;
+    isLeaf?: boolean; // 显式标记叶子节点
 }
 
-export interface TreeProps {
-    data: TreeDataItem[];
-    checkbox?: boolean;
-}
-
-export interface TreeNodeProps {
-    node: TreeDataItem;
-    level: number;
-    expandedKeys: (string | number)[];
-    selectedKeys: (string | number)[];
-    onToggleExpand: (key: string | number) => void;
-    onToggleSelect: (keys: (string | number)[]) => void;
-    showCheckbox: boolean;
+export interface FlatNode {
+    key: string | number;
+    parentKey: string | number | null;
+    childrenKeys: (string | number)[];
+    item: TreeDataItem;
+    disabled: boolean;
 }

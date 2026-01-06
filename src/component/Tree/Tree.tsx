@@ -1,22 +1,15 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import styles from './Tree.module.less';
-import type { ReactNode, DragEvent } from 'react';
+import type { DragEvent } from 'react';
+import type { TreeDataItem, FlatNode } from './interface';
 
-// --- 类型定义 ---
 
-export interface TreeDataItem {
-    key: string | number;
-    title: ReactNode;
-    children?: TreeDataItem[];
-    disabled?: boolean;
-    icon?: ReactNode;
-    isLeaf?: boolean; // 显式标记叶子节点
-}
 
 interface TreeProps {
     data: TreeDataItem[];
     checkbox?: boolean;
     draggable?: boolean;
+    switchIcon?: React.ReactNode;
     // 拖拽相关回调
     onDragStart?: (info: { event: DragEvent; node: TreeDataItem }) => void;
     onDragEnter?: (info: { event: DragEvent; node: TreeDataItem; expandedKeys: (string | number)[] }) => void;
@@ -40,6 +33,7 @@ interface TreeNodeProps {
     onToggleExpand: (key: string | number) => void;
     onCheck: (key: string | number, checked: boolean) => void; // 这里的名字改为 Check 更语义化
     showCheckbox: boolean;
+    switchIcon?: React.ReactNode;
     draggable?: boolean;
     // 拖拽内部状态传递
     dragOverNodeKey: string | number | null;
@@ -52,13 +46,7 @@ interface TreeNodeProps {
 }
 
 
-interface FlatNode {
-    key: string | number;
-    parentKey: string | number | null;
-    childrenKeys: (string | number)[];
-    item: TreeDataItem;
-    disabled: boolean;
-}
+
 
 const flattenTreeData = (data: TreeDataItem[], parentKey: string | number | null = null): Map<string | number, FlatNode> => {
     let map = new Map<string | number, FlatNode>();
@@ -89,6 +77,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
     onToggleExpand,
     onCheck,
     showCheckbox,
+    switchIcon = '▶',
     draggable,
     dragOverNodeKey,
     dropPosition,
@@ -174,7 +163,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                         className={`${styles['tree-node-icon']} ${isExpanded ? styles['expanded'] : ''}`}
                         onClick={handleToggleExpand}
                     >
-                        ▶
+                        {switchIcon}
                     </span>
                 ) : <span className={styles['tree-node-icon']} />}
 
@@ -221,6 +210,7 @@ const Tree: React.FC<TreeProps> = ({
     data,
     checkbox = false,
     draggable = false,
+    switchIcon = '▶',
     onDragStart,
     onDragEnter,
     onDragOver,
@@ -306,8 +296,6 @@ const Tree: React.FC<TreeProps> = ({
 
         setDragOverNodeKey(node.key);
         setDropPosition(position);
-
-        // 如果外部需要这个 position，可以包含在回调里
         onDragOver?.({ event: e, node });
     };
     const handleDragLeave = (e: DragEvent, node: TreeDataItem) => {
@@ -351,6 +339,7 @@ const Tree: React.FC<TreeProps> = ({
                     showCheckbox={checkbox}
                     draggable={draggable}
                     dragOverNodeKey={dragOverNodeKey}
+                    switchIcon={switchIcon}
                     dropPosition={dropPosition}
                     onNodeDragStart={handleDragStart}
                     onNodeDragEnter={handleDragEnter}
