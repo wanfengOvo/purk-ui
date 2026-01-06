@@ -26,149 +26,167 @@ export default function Carousel(props: PropsWithChildren<CarouselProps>) {
     } = props;
 
     const slides = React.Children.toArray(children);
-    const slideCount = slides.length;
+    const originalCount = slides.length;
 
-    const clones = infinite && slideCount > 1
-        ? [slides[slideCount - 1], ...slides, slides[0]]
+    const clones = infinite && originalCount > 1
+        ? [slides[originalCount - 1], ...slides, slides[0]]
         : slides;
 
     const [currentIndex, setCurrentIndex] = useState(infinite ? 1 : 0);
-    const [transitionEnabled, setTransitionEnabled] = useState(true);
-    //当前拖拽的距离
-    const [translateX, setTranslateX] = useState(0);
-    const [isDragging, setIsDragging] = useState(false);
-    const [startX, setStartX] = useState<number | null>(null);
+    // 是否开启 transition 动画（拖拽时、瞬移复位时需要关闭）
+    const [isTransitioning, setIsTransitioning] = useState(false);
 
-    //是否正在进行过渡动画
-    const isAnimatingRef = useRef(false);
     const listRef = useRef<HTMLDivElement>(null);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const forceUnlock = useCallback(() => {
-        isAnimatingRef.current = false;
-        if (safetyTimerRef.current) {
-            clearTimeout(safetyTimerRef.current);
-            safetyTimerRef.current = null;
-        }
+    // 拖拽相关的数据 ref (不触发渲染)
+    const dragInfo = useRef({
+        isDown: false,
+        startX: 0,
+        currentTranslate: 0,
+        startTime: 0
+    });
+
+    // 自动播放控制 ref
+    const isPausedRef = useRef(false);
+
+    const updateListStyle = useCallback((offset = 0, withAnimation = true) => {
+        if (!listRef.current) return;
+        const percent = currentIndex * 100;
+
+        listRef.current.style.transition = withAnimation ? 'transform 0.5s ease' : 'none';
+        listRef.current.style.transform = `translateX(calc(-${percent}% + ${offset}px))`;
+    }, [currentIndex]);
+
+    // 当 index 或 动画状态变化时，同步样式
+    useEffect(() => {
+        updateListStyle(0, isTransitioning);
+    }, [currentIndex, isTransitioning, updateListStyle]);
+
+
+    const moveTo = useCallback((index: number) => {
+        setIsTransitioning(true); // 开启 CSS 动画
+        setCurrentIndex(index);
     }, []);
 
-
-    const moveTo = useCallback((index: number, needTransition = true) => {
-        // 如果正在动画中，且不是“无动画跳转(瞬移)”，则拒绝操作
-        if (isAnimatingRef.current && needTransition) return;
-
-        setTransitionEnabled(needTransition);
-        setCurrentIndex(index);
-
-        if (needTransition) {
-            isAnimatingRef.current = true;
-            // 如果 onTransitionEnd 没有触发，这个定时器会强制解锁，防止死锁
-            if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current);
-            safetyTimerRef.current = setTimeout(() => {
-                forceUnlock();
-            }, 600);
-        }
-    }, [forceUnlock]);
-
-
     const next = useCallback(() => {
-        if (isAnimatingRef.current) return;
-        if (!infinite && currentIndex === slideCount - 1) return;
-        moveTo(currentIndex + 1);
-    }, [currentIndex, infinite, slideCount, moveTo]);
+        // 如果正在动画中，拒绝操作（防止快速点击导致错位）
+        if (isTransitioning) return;
+
+        const target = currentIndex + 1;
+        if (!infinite && target >= clones.length) return;
+        moveTo(target);
+    }, [currentIndex, infinite, clones.length, isTransitioning, moveTo]);
 
     const prev = useCallback(() => {
-        if (isAnimatingRef.current) return;
-        if (!infinite && currentIndex === 0) return;
-        moveTo(currentIndex - 1);
-    }, [currentIndex, infinite, moveTo]);
+        if (isTransitioning) return;
+
+        const target = currentIndex - 1;
+        if (!infinite && target < 0) return;
+        moveTo(target);
+    }, [currentIndex, infinite, isTransitioning, moveTo]);
+
+
+
+    const handleTransitionEnd = () => {
+        setIsTransitioning(false); // 动画结束，关闭动画标记
+
+        if (!infinite) return;
+
+        // 检查边界，进行瞬间跳转（Teleport）
+        if (currentIndex === 0) {
+            // 到了 0 (替身：最后一张)，瞬间跳到 倒数第2张 (真实：最后一张)
+            setCurrentIndex(clones.length - 2);
+        } else if (currentIndex === clones.length - 1) {
+            // 到了 最后 (替身：第一张)，瞬间跳到 1 (真实：第一张)
+            setCurrentIndex(1);
+        }
+    };
+
+
+
 
     const nextRef = useRef(next);
     useEffect(() => {
         nextRef.current = next;
     }, [next]);
 
-
-    const handleTransitionEnd = () => {
-        // 正常结束，执行解锁
-        forceUnlock();
-
-        if (!infinite) return;
-        if (currentIndex === clones.length - 1) {
-            // 跳回 index 1，不需要动画
-            moveTo(1, false);
-        } else if (currentIndex === 0) {
-            // 跳回倒数第2个，不需要动画
-            moveTo(clones.length - 2, false);
-        }
-    };
-
-
     useEffect(() => {
-        if (!autoPlay || isDragging) return;
+        if (!autoPlay) return;
 
-        const startTimer = () => {
-            if (timerRef.current) clearInterval(timerRef.current);
-            timerRef.current = setInterval(() => {
-                nextRef.current();
-            }, autoplaySpeed);
-        };
+        const timer = setInterval(() => {
+            // 检查暂停条件
+            if (isPausedRef.current || dragInfo.current.isDown) return;
+            nextRef.current();
+        }, autoplaySpeed);
 
-        startTimer();
+        timerRef.current = timer;
 
-        return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
-            if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current);
-        };
-    }, [autoPlay, isDragging, autoplaySpeed]);
+        return () => clearInterval(timer);
+    }, [autoPlay, autoplaySpeed]);
 
 
 
     const handleDragStart = (e: MouseEvent | TouchEvent) => {
-        if (!draggable || isAnimatingRef.current) return;
-        if (e.type === 'mousedown') e.preventDefault();
+        if (!draggable || isTransitioning) return;
 
-        setIsDragging(true);
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        setStartX(clientX);
+        // 只有鼠标左键才触发
+        if (e.type === 'mousedown' && (e as MouseEvent).button !== 0) return;
 
-        setTransitionEnabled(false); // 拖拽时关闭动画
-        if (timerRef.current) clearInterval(timerRef.current);
+        dragInfo.current.isDown = true;
+        dragInfo.current.startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        dragInfo.current.startTime = Date.now();
+        dragInfo.current.currentTranslate = 0;
+
+        // 拖拽开始，立即关闭 CSS 动画，保证跟手
+        if (listRef.current) {
+            listRef.current.style.transition = 'none';
+        }
     };
 
     const handleDragMove = (e: MouseEvent | TouchEvent) => {
-        if (!isDragging || startX === null) return;
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        setTranslateX(clientX - startX);
+        if (!dragInfo.current.isDown) return;
+
+        const currentX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const diff = currentX - dragInfo.current.startX;
+        dragInfo.current.currentTranslate = diff;
+
+        //直接修改 DOM transform，不触发 React Render
+        updateListStyle(diff, false);
     };
 
     const handleDragEnd = () => {
-        if (!isDragging) return;
-        setIsDragging(false);
-        setStartX(null);
-        setTranslateX(0);
+        if (!dragInfo.current.isDown) return;
+        dragInfo.current.isDown = false;
 
-        const threshold = listRef.current ? listRef.current.clientWidth / 4 : 100;
+        const diff = dragInfo.current.currentTranslate;
+        const duration = Date.now() - dragInfo.current.startTime;
+        const width = listRef.current?.clientWidth || 0;
 
-        // 恢复动画
-        if (translateX < -threshold) {
-            // 向左拖，下一张
-            if (!infinite && currentIndex === slideCount - 1) moveTo(currentIndex); // 边界回弹
+        // 判定条件：拖动超过 30% 宽度，或者 快速滑动(Flick)且距离大于50px
+        const threshold = width * 0.3;
+        const isFlick = duration < 300 && Math.abs(diff) > 50;
+
+        // 恢复动画状态（moveTo 会重新开启 transition）
+        if (diff < -threshold || (isFlick && diff < 0)) {
+            // 向左拖 -> 下一张
+            if (!infinite && currentIndex === clones.length - 1) moveTo(currentIndex); // 边界回弹
             else moveTo(currentIndex + 1);
-        } else if (translateX > threshold) {
-            // 向右拖，上一张
+        } else if (diff > threshold || (isFlick && diff > 0)) {
+            // 向右拖 -> 上一张
             if (!infinite && currentIndex === 0) moveTo(currentIndex); // 边界回弹
             else moveTo(currentIndex - 1);
         } else {
-            // 没拖动多少，回弹复位
+            // 没达到条件，回弹复位
             moveTo(currentIndex);
         }
     };
 
+
+    // 获取指示器（Dots）当前激活的索引（映射回原始 slides 长度）
     const getActiveDotIndex = () => {
         if (!infinite) return currentIndex;
-        if (currentIndex === 0) return slideCount - 1;
+        if (currentIndex === 0) return originalCount - 1;
         if (currentIndex === clones.length - 1) return 0;
         return currentIndex - 1;
     };
@@ -176,24 +194,16 @@ export default function Carousel(props: PropsWithChildren<CarouselProps>) {
     return (
         <div
             className={styles.carousel}
-            onMouseEnter={() => timerRef.current && clearInterval(timerRef.current)}
-            onMouseLeave={() => {
-                // 鼠标离开，恢复自动播放
-                if (autoPlay && !isDragging) {
-                    if (timerRef.current) clearInterval(timerRef.current);
-                    timerRef.current = setInterval(() => nextRef.current(), autoplaySpeed);
-                }
-            }}
+            onMouseEnter={() => { isPausedRef.current = true; }}
+            onMouseLeave={() => { isPausedRef.current = false; }}
         >
             <div className={styles.slider}>
                 <div
                     ref={listRef}
                     className={styles.list}
                     style={{
-                        transform: `translateX(calc(-${currentIndex * 100}% + ${translateX}px))`,
-                        // 只有在非拖拽 且 需要过渡时 才开启 CSS 动画
-                        transition: transitionEnabled ? 'transform 0.5s ease' : 'none',
-                        cursor: draggable ? 'grab' : 'auto'
+                        cursor: draggable ? 'grab' : 'auto',
+                        touchAction: draggable ? 'pan-y' : 'auto'
                     }}
                     onTransitionEnd={handleTransitionEnd}
                     onMouseDown={handleDragStart}
@@ -205,7 +215,10 @@ export default function Carousel(props: PropsWithChildren<CarouselProps>) {
                     onTouchEnd={handleDragEnd}
                 >
                     {clones.map((slide, index) => (
-                        <div className={styles.slide} key={index} style={{ width: '100%', flexShrink: 0 }}>
+                        <div
+                            className={styles.slide}
+                            key={index}
+                        >
                             {slide}
                         </div>
                     ))}
@@ -213,8 +226,22 @@ export default function Carousel(props: PropsWithChildren<CarouselProps>) {
 
                 {arrows && (
                     <>
-                        <Button shape="circle" className={`${styles.arrow} ${styles.prev}`} onClick={prev}>&lt;</Button>
-                        <Button shape="circle" className={`${styles.arrow} ${styles.next}`} onClick={next}>&gt;</Button>
+                        <Button
+                            shape="circle"
+                            className={`${styles.arrow} ${styles.prev}`}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={prev}
+                        >
+                            &lt;
+                        </Button>
+                        <Button
+                            shape="circle"
+                            className={`${styles.arrow} ${styles.next}`}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={next}
+                        >
+                            &gt;
+                        </Button>
                     </>
                 )}
 
@@ -225,8 +252,9 @@ export default function Carousel(props: PropsWithChildren<CarouselProps>) {
                                 key={index}
                                 className={`${styles.dot} ${index === getActiveDotIndex() ? styles.active : ''}`}
                                 onClick={() => {
-                                    if (!isAnimatingRef.current) {
-                                        moveTo(infinite ? index + 1 : index)
+                                    if (!isTransitioning) {
+                                        // 映射逻辑：如果是无限模式，index 需要 +1（因为 0 是克隆位）
+                                        moveTo(infinite ? index + 1 : index);
                                     }
                                 }}
                             />

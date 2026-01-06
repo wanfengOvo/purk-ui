@@ -4,7 +4,7 @@ import Carousel from './component/Carousel/Carousel';
 const App: React.FC = () => {
   return (
     <div className="App">
-      <Carousel 
+      <Carousel
         arrows={true}
         autoPlay={true}
         autoplaySpeed={3000}
