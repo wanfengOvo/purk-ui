@@ -1,33 +1,30 @@
-import React from 'react';
-import Carousel from './component/Carousel/Carousel';
+import React, { useState } from 'react';
+import Popover from './component/Popover/Popover';
+
+
 
 const App: React.FC = () => {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="App">
-      <Carousel
-        arrows={true}
-        autoPlay={true}
-        autoplaySpeed={3000}
-        draggable={true}
-        infinite={true}
-        dots={true}
+    <div style={{ padding: '100px' }}>
+      <Popover
+        title="Popover 标题"
+        content={() => <div>这是 Popover 内容（函数式渲染）</div>}
+        placement="top"
+        arrow={true}
+        open={open}
+        trigger='click'
+        mouseEnterDelay={100}
+        mouseLeaveDelay={200}
+        classNames={{
+          container: {
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          }
+        }}
       >
-        <div style={{ height: '400px', backgroundColor: '#ff6b6b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '24px' }}>
-          Slide 1
-        </div>
-        <div style={{ height: '400px', backgroundColor: '#4ecdc4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '24px' }}>
-          Slide 2
-        </div>
-        <div style={{ height: '400px', backgroundColor: '#45b7d1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '24px' }}>
-          Slide 3
-        </div>
-        <div style={{ height: '400px', backgroundColor: '#96ceb4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '24px' }}>
-          Slide 4
-        </div>
-        <div style={{ height: '400px', backgroundColor: '#feca57', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '24px' }}>
-          Slide 5
-        </div>
-      </Carousel>
+        <span onClick={() => setOpen(!open)}>哈机密</span>
+      </Popover>
+
     </div>
   );
 };
