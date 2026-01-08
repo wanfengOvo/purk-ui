@@ -1,0 +1,196 @@
+.splitter {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+
+    &.vertical {
+        flex-direction: column;
+    }
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    min-height: 0;
+
+    &.dragging {
+        pointer-events: none;
+        user-select: none;
+    }
+
+    &.collapsed {
+        overflow: hidden;
+        padding: 0;
+        border: 0;
+    }
+
+    &.transition {
+        transition: flex-basis 0.3s ease-in-out;
+    }
+}
+
+.resizer {
+    position: relative;
+    z-index: 100; // 确保在最上层
+    flex-shrink: 0;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    user-select: none;
+
+    // 扩大点击区域
+    &::before {
+        content: '';
+        position: absolute;
+        z-index: 0;
+        background: transparent;
+    }
+
+    // 可视化分割线
+    &::after {
+        content: '';
+        position: absolute;
+        z-index: 0;
+        background-color: #f0f0f0;
+        transition: background-color 0.2s;
+    }
+
+    &:hover,
+    &.active {
+
+        // 激活状态样式
+        &::after {
+            background-color: #1677ff;
+        }
+    }
+
+    &.horizontal {
+        width: 10px;
+        cursor: col-resize;
+
+        &::before {
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+        }
+
+        &::after {
+            width: 1px;
+            height: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        // 拖拽手柄图标
+        .dragger-icon {
+            transform: rotate(90deg); // 竖向排列
+        }
+
+
+        .collapse-trigger {
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 24px;
+            border-radius: 0;
+
+            &.prev {
+                right: 50%;
+                margin-right: 1px;
+                border-radius: 4px 0 0 4px;
+            }
+
+            &.next {
+                left: 50%; // 从中心向右
+                margin-left: 1px;
+                border-radius: 0 4px 4px 0;
+            }
+        }
+    }
+
+
+    &.vertical {
+        height: 10px;
+        cursor: row-resize;
+
+        &::before {
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        &::after {
+            height: 1px;
+            width: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+
+        .collapse-trigger {
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 12px;
+
+            &.prev {
+                bottom: 50%;
+                margin-bottom: 1px;
+                border-radius: 4px 4px 0 0;
+            }
+
+            &.next {
+                top: 50%;
+                margin-top: 1px;
+                border-radius: 0 0 4px 4px;
+            }
+        }
+    }
+}
+
+
+.collapse-trigger {
+    position: absolute;
+    z-index: 10;
+    background-color: #fff;
+    border: 1px solid #d9d9d9;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 10px;
+    color: #888;
+    transition: all 0.2s;
+    overflow: hidden;
+
+    opacity: 1;
+
+    &:hover {
+        background-color: #fafafa;
+        color: #1677ff;
+        border-color: #1677ff;
+        z-index: 11;
+    }
+}
+
+.dragger-icon {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    pointer-events: none;
+    color: #bfbfbf;
+}
