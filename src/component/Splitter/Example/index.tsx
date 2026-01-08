@@ -17,17 +17,17 @@ const SplitterExample: React.FC = () => {
           onResize={(sizes) => console.log('水平面板大小变化:', sizes)}
           onResizeEnd={(sizes) => console.log('水平拖拽结束:', sizes)}
         >
-          <Splitter.Panel 
-            defaultSize="200px" 
-            min="100px" 
+          <Splitter.Panel
+            defaultSize="200px"
+            min="100px"
             max="400px"
             style={{ backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             左侧面板
           </Splitter.Panel>
-          <Splitter.Panel 
-            defaultSize="200px" 
-            min="100px" 
+          <Splitter.Panel
+            defaultSize="200px"
+            min="100px"
             max="400px"
             style={{ backgroundColor: '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
@@ -41,21 +41,22 @@ const SplitterExample: React.FC = () => {
         <h2>垂直分割示例</h2>
         <Splitter
           orientation="vertical"
+          lazy={true}
           style={{ height: '400px' }}
           onResize={(sizes) => setVerticalSizes(sizes)}
           onResizeEnd={(sizes) => console.log('垂直拖拽结束:', sizes)}
         >
-          <Splitter.Panel 
-            defaultSize="150px" 
-            min="80px" 
+          <Splitter.Panel
+            defaultSize="150px"
+            min="80px"
             max="300px"
             style={{ backgroundColor: '#d0f0d0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             上方面板
           </Splitter.Panel>
-          <Splitter.Panel 
-            defaultSize="150px" 
-            min="80px" 
+          <Splitter.Panel
+            defaultSize="150px"
+            min="80px"
             max="300px"
             style={{ backgroundColor: '#b0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
@@ -68,13 +69,13 @@ const SplitterExample: React.FC = () => {
       <div>
         <h2>受控模式示例</h2>
         <div style={{ marginBottom: '10px' }}>
-          <button 
+          <button
             onClick={() => setControlledSizes([100, 300])}
             style={{ marginRight: '10px' }}
           >
             设置左小右大
           </button>
-          <button 
+          <button
             onClick={() => setControlledSizes([300, 100])}
           >
             设置左大右小
@@ -86,17 +87,17 @@ const SplitterExample: React.FC = () => {
           onResize={(sizes) => setControlledSizes(sizes)}
           onResizeEnd={(sizes) => console.log('受控模式拖拽结束:', sizes)}
         >
-          <Splitter.Panel 
-            size={controlledSizes[0]} 
-            min="50px" 
+          <Splitter.Panel
+            size={controlledSizes[0]}
+            min="50px"
             max="400px"
             style={{ backgroundColor: '#ffe0e0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             受控面板 1 (当前: {controlledSizes[0]}px)
           </Splitter.Panel>
-          <Splitter.Panel 
-            size={controlledSizes[1]} 
-            min="50px" 
+          <Splitter.Panel
+            size={controlledSizes[1]}
+            min="50px"
             max="400px"
             style={{ backgroundColor: '#e0e0ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
@@ -113,22 +114,22 @@ const SplitterExample: React.FC = () => {
           style={{ height: '250px' }}
           onCollapse={(index, collapsed) => console.log(`面板 ${index} 折叠状态:`, collapsed)}
         >
-          <Splitter.Panel 
-            defaultSize="200px" 
+          <Splitter.Panel
+            defaultSize="200px"
             collapsible={{ start: false, end: true }} // 只在右侧显示折叠按钮
             style={{ backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             面板1 (右侧可折叠)
           </Splitter.Panel>
-          <Splitter.Panel 
-            defaultSize="200px" 
+          <Splitter.Panel
+            defaultSize="200px"
             collapsible={{ start: true, end: true }} // 两侧都可折叠
             style={{ backgroundColor: '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             面板2 (两侧可折叠)
           </Splitter.Panel>
-          <Splitter.Panel 
-            defaultSize="200px" 
+          <Splitter.Panel
+            defaultSize="200px"
             collapsible={{ start: true, end: false }} // 只在左侧显示折叠按钮
             style={{ backgroundColor: '#d0d0d0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
@@ -149,29 +150,29 @@ const SplitterExample: React.FC = () => {
           onResizeEnd={(sizes) => console.log('全功能拖拽结束:', sizes)}
           onCollapse={(index, collapsed) => console.log(`全功能面板 ${index} 折叠:`, collapsed)}
         >
-          <Splitter.Panel 
-            defaultSize="25%" 
-            min="100px" 
-            max="60%" 
+          <Splitter.Panel
+            defaultSize="25%"
+            min="100px"
+            max="60%"
             collapsible={true}
             style={{ backgroundColor: '#fff3cd', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ffeaa7' }}
           >
             百分比面板 (25%)
           </Splitter.Panel>
-          <Splitter.Panel 
-            defaultSize="200px" 
-            min="100px" 
-            max="400px" 
+          <Splitter.Panel
+            defaultSize="200px"
+            min="100px"
+            max="400px"
             collapsible={{ start: true, end: true }}
             resizable={false} // 禁用拖拽
             style={{ backgroundColor: '#d1ecf1', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #bee5eb' }}
           >
             固定大小面板 (不可拖拽)
           </Splitter.Panel>
-          <Splitter.Panel 
-            defaultSize="200px" 
-            min="100px" 
-            max="400px" 
+          <Splitter.Panel
+            defaultSize="200px"
+            min="100px"
+            max="400px"
             collapsible={true}
             style={{ backgroundColor: '#d4edda', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #c3e6cb' }}
           >

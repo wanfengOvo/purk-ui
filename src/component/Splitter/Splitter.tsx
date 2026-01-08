@@ -5,9 +5,7 @@ import React, {
     useMemo,
     Children,
     isValidElement,
-    useCallback,
     type PropsWithChildren,
-    type ReactNode,
     type ReactElement,
     type CSSProperties,
 } from 'react';
@@ -30,8 +28,8 @@ export interface PanelProps {
 export interface SplitterProps {
     className?: string;
     style?: CSSProperties;
-    collapsibleIcon?: ReactNode;
-    draggerIcon?: ReactNode;
+    collapsibleIcon?: React.ReactNode;
+    draggerIcon?: React.ReactNode;
     onCollapse?: (index: number, collapsed: boolean) => void;
     orientation?: Orientation;
     onResize?: (sizes: number[]) => void;
@@ -80,14 +78,18 @@ const Splitter: React.FC<PropsWithChildren<SplitterProps>> & { Panel: typeof Spl
 
     const [isDragging, setIsDragging] = useState(false);
     const [activeResizerIndex, setActiveResizerIndex] = useState<number | null>(null);
+    const [ghostPosition, setGhostPosition] = useState<number | null>(null);
 
     const dragRef = useRef<{
         startX: number;
         startSizes: (number | undefined)[];
         totalSize: number;
         index: number;
+        finalSizes?: (number | undefined)[];
+        initialResizerPos: number;
     } | null>(null);
 
+    // 初始化尺寸逻辑
     useEffect(() => {
         if (!containerRef.current) return;
         const rect = containerRef.current.getBoundingClientRect();
@@ -95,14 +97,10 @@ const Splitter: React.FC<PropsWithChildren<SplitterProps>> & { Panel: typeof Spl
 
         setPanelSizes((prev) => {
             if (prev.length !== panels.length) {
-                return panels.map(p =>
-                    pxToNumber(p.props.size ?? p.props.defaultSize, totalSize)
-                );
+                return panels.map(p => pxToNumber(p.props.size ?? p.props.defaultSize, totalSize));
             }
-
             const next = [...prev];
             let hasChange = false;
-
             panels.forEach((panel, index) => {
                 if (panel.props.size !== undefined) {
                     const newSizePx = pxToNumber(panel.props.size, totalSize);
@@ -112,34 +110,44 @@ const Splitter: React.FC<PropsWithChildren<SplitterProps>> & { Panel: typeof Spl
                     }
                 }
             });
-
             return hasChange ? next : prev;
         });
     }, [panels, isHorizontal]);
 
     const getConstrainedSize = (targetIndex: number, newSize: number, totalSize: number): number => {
-        const panelProps = panels[targetIndex].props;
+        const panelProps = panels[targetIndex]?.props;
+        if (!panelProps) return newSize;
         const min = pxToNumber(panelProps.min, totalSize) ?? 0;
         const max = pxToNumber(panelProps.max, totalSize) ?? totalSize;
         return Math.max(min, Math.min(max, newSize));
     };
 
-    const handleMouseDown = (e: React.MouseEvent, index: number) => {
+
+    const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>, index: number) => {
         if (!containerRef.current) return;
         e.preventDefault();
         e.stopPropagation();
 
-        const rect = containerRef.current.getBoundingClientRect();
-        const totalSize = isHorizontal ? rect.width : rect.height;
+        // 设置指针捕获，后续的 move/up 事件都会发给这个元素，即使鼠标移出去了
+        e.currentTarget.setPointerCapture(e.pointerId);
+
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const totalSize = isHorizontal ? containerRect.width : containerRect.height;
 
         const currentNodes = containerRef.current.children;
         const prevNode = currentNodes[index * 2] as HTMLElement;
         const nextNode = currentNodes[index * 2 + 2] as HTMLElement;
+        const resizerNode = e.currentTarget; // 直接使用触发事件的元素
 
         if (!prevNode || !nextNode) return;
 
         const prevSizePx = isHorizontal ? prevNode.offsetWidth : prevNode.offsetHeight;
         const nextSizePx = isHorizontal ? nextNode.offsetWidth : nextNode.offsetHeight;
+
+        const resizerRect = resizerNode.getBoundingClientRect();
+        const initialResizerPos = isHorizontal
+            ? resizerRect.left - containerRect.left
+            : resizerRect.top - containerRect.top;
 
         const newStartSizes = [...panelSizes];
         newStartSizes[index] = prevSizePx;
@@ -150,66 +158,96 @@ const Splitter: React.FC<PropsWithChildren<SplitterProps>> & { Panel: typeof Spl
             startSizes: newStartSizes,
             totalSize,
             index,
+            initialResizerPos,
+            finalSizes: newStartSizes,
         };
 
-        setIsDragging(true);
         setActiveResizerIndex(index);
+        setIsDragging(true);
+        if (lazy) setGhostPosition(initialResizerPos);
         onResizeStart?.(newStartSizes.map(s => s || 0));
-
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
     };
 
-    const handleMouseMove = useCallback((e: MouseEvent) => {
-        if (!dragRef.current) return;
 
-        const { startX, startSizes, totalSize, index } = dragRef.current;
+    const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!isDragging || !dragRef.current) return;
+
+        const { startX, startSizes, totalSize, index, initialResizerPos, finalSizes } = dragRef.current;
         const currentPos = isHorizontal ? e.clientX : e.clientY;
         const delta = currentPos - startX;
 
         const prevIdx = index;
         const nextIdx = index + 1;
-
         const startPrev = startSizes[prevIdx] as number;
         const startNext = startSizes[nextIdx] as number;
 
-        let newPrev = startPrev + delta;
+        // 计算原始值
+        let newPrevRaw = startPrev + delta;
+        const constrainedPrevRaw = getConstrainedSize(prevIdx, newPrevRaw, totalSize);
+        const validDeltaPrev = constrainedPrevRaw - startPrev;
 
-        const constrainedPrev = getConstrainedSize(prevIdx, newPrev, totalSize);
-        const validDeltaPrev = constrainedPrev - startPrev;
+        let constrainedNextRaw = startNext - validDeltaPrev;
+        constrainedNextRaw = getConstrainedSize(nextIdx, constrainedNextRaw, totalSize);
 
-        let constrainedNext = startNext - validDeltaPrev;
-        constrainedNext = getConstrainedSize(nextIdx, constrainedNext, totalSize);
+        const finalNextRaw = constrainedNextRaw;
+        const finalPrevRaw = startPrev + (startNext - finalNextRaw);
 
-        const finalNext = constrainedNext;
-        const finalPrev = startPrev + (startNext - finalNext);
 
-        if (!lazy) {
+        const finalPrev = Math.round(finalPrevRaw);
+        const finalNext = Math.round(finalNextRaw);
+
+        // 防抖/脏检查：如果取整后的值和上一次记录的值一样，直接忽略，不触发 React 渲染和回调
+        if (finalSizes && finalSizes[prevIdx] === finalPrev && finalSizes[nextIdx] === finalNext) {
+            return;
+        }
+
+        // 构造新的尺寸数组
+        const nextSizes = [...(finalSizes || startSizes)];
+        nextSizes[prevIdx] = finalPrev;
+        nextSizes[nextIdx] = finalNext;
+
+        // 更新 ref 中的记录
+        dragRef.current.finalSizes = nextSizes;
+
+        if (lazy) {
+            setGhostPosition(Math.round(initialResizerPos + validDeltaPrev));
+        } else {
             setPanelSizes(prev => {
                 const next = [...prev];
+                if (next[prevIdx] === finalPrev && next[nextIdx] === finalNext) return prev;
                 next[prevIdx] = finalPrev;
                 next[nextIdx] = finalNext;
                 return next;
             });
-            onResize?.([finalPrev, finalNext]);
+            onResize?.(nextSizes.map(s => s || 0));
         }
-    }, [isHorizontal, lazy, panels]);
+    };
 
-    const handleMouseUp = useCallback(() => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+
+    const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!isDragging) return;
+
+        e.currentTarget.releasePointerCapture(e.pointerId);
+
+        if (dragRef.current) {
+            const { finalSizes } = dragRef.current;
+            if (lazy && finalSizes) {
+                setPanelSizes(finalSizes);
+                onResize?.(finalSizes.map(s => s || 0));
+            }
+            // 确保结束时也是整洁的整数
+            onResizeEnd?.(finalSizes ? finalSizes.map(s => s || 0) : []);
+        }
 
         setIsDragging(false);
         setActiveResizerIndex(null);
-        if (dragRef.current) {
-            onResizeEnd?.(panelSizes.map(s => s || 0));
-        }
+        setGhostPosition(null);
         dragRef.current = null;
-    }, [handleMouseMove, panelSizes, onResizeEnd]);
+    };
+
 
     const handleCollapse = (index: number, type: 'prev' | 'next') => {
         if (!containerRef.current) return;
-
         const prevIdx = index;
         const nextIdx = index + 1;
 
@@ -219,54 +257,48 @@ const Splitter: React.FC<PropsWithChildren<SplitterProps>> & { Panel: typeof Spl
         const currentNodes = containerRef.current.children;
         const prevNode = currentNodes[prevIdx * 2] as HTMLElement;
         const nextNode = currentNodes[nextIdx * 2] as HTMLElement;
+        const currentPrevSize = isHorizontal ? prevNode?.offsetWidth : prevNode?.offsetHeight;
+        const currentNextSize = isHorizontal ? nextNode?.offsetWidth : nextNode?.offsetHeight;
 
-        const currentPrevSize = isHorizontal ? prevNode.offsetWidth : prevNode.offsetHeight;
-        const currentNextSize = isHorizontal ? nextNode.offsetWidth : nextNode.offsetHeight;
 
-        const doCollapse = (targetIdx: number, neighborIdx: number, currentTargetSize: number, currentNeighborSize: number) => {
-            setCachedSizes(map => new Map(map).set(targetIdx, currentTargetSize));
-            setCollapsedIndices(set => new Set(set).add(targetIdx));
-
+        const updateSizes = (tIdx: number, nIdx: number, tSize: number, nSize: number) => {
             setPanelSizes(prev => {
                 const next = [...prev];
-                next[targetIdx] = 0;
-                next[neighborIdx] = currentNeighborSize + currentTargetSize;
+                next[tIdx] = tSize;
+                next[nIdx] = nSize;
                 return next;
             });
-            onCollapse?.(targetIdx, true);
-        };
-
-        const doExpand = (targetIdx: number, neighborIdx: number, currentNeighborSize: number) => {
-            const restoredSize = cachedSizes.get(targetIdx) ?? 50;
-            const newNeighborSize = Math.max(0, currentNeighborSize - restoredSize);
-            setCollapsedIndices(set => {
-                const next = new Set(set);
-                next.delete(targetIdx);
-                return next;
-            });
-
-            setPanelSizes(prev => {
-                const next = [...prev];
-                next[targetIdx] = restoredSize;
-                next[neighborIdx] = newNeighborSize;
-                return next;
-            });
-            onCollapse?.(targetIdx, false);
         };
 
         if (type === 'prev') {
-            // 点击左箭头：只有当右侧被折叠时，它才充当“展开右侧”的功能
             if (isNextCollapsed) {
-                doExpand(nextIdx, prevIdx, currentPrevSize);
+                // 展开右侧
+                const restoredSize = cachedSizes.get(nextIdx) ?? 50;
+                const newPrevSize = Math.max(0, currentPrevSize - restoredSize);
+                setCollapsedIndices(s => { const newSet = new Set(s); newSet.delete(nextIdx); return newSet; });
+                updateSizes(nextIdx, prevIdx, restoredSize, newPrevSize);
+                onCollapse?.(nextIdx, false);
             } else {
-                doCollapse(prevIdx, nextIdx, currentPrevSize, currentNextSize);
+                // 折叠左侧
+                setCachedSizes(m => new Map(m).set(prevIdx, currentPrevSize));
+                setCollapsedIndices(s => new Set(s).add(prevIdx));
+                updateSizes(prevIdx, nextIdx, 0, currentNextSize + currentPrevSize);
+                onCollapse?.(prevIdx, true);
             }
         } else {
-            // 点击右箭头：只有当左侧被折叠时，它才充当“展开左侧”的功能
             if (isPrevCollapsed) {
-                doExpand(prevIdx, nextIdx, currentNextSize);
+                // 展开左侧
+                const restoredSize = cachedSizes.get(prevIdx) ?? 50;
+                const newNextSize = Math.max(0, currentNextSize - restoredSize);
+                setCollapsedIndices(s => { const newSet = new Set(s); newSet.delete(prevIdx); return newSet; });
+                updateSizes(prevIdx, nextIdx, restoredSize, newNextSize);
+                onCollapse?.(prevIdx, false);
             } else {
-                doCollapse(nextIdx, prevIdx, currentNextSize, currentPrevSize);
+                // 折叠右侧
+                setCachedSizes(m => new Map(m).set(nextIdx, currentNextSize));
+                setCollapsedIndices(s => new Set(s).add(nextIdx));
+                updateSizes(nextIdx, prevIdx, 0, currentPrevSize + currentNextSize);
+                onCollapse?.(nextIdx, true);
             }
         }
     };
@@ -275,14 +307,9 @@ const Splitter: React.FC<PropsWithChildren<SplitterProps>> & { Panel: typeof Spl
         const panel = panels[panelIndex];
         if (!panel) return false;
         const { collapsible } = panel.props;
-
         if (collapsible === undefined || collapsible === false) return false;
         if (collapsible === true) return true;
-
-        if (type === 'start') return !!collapsible.start;
-        if (type === 'end') return !!collapsible.end;
-
-        return false;
+        return type === 'start' ? !!collapsible.start : !!collapsible.end;
     };
 
     return (
@@ -295,7 +322,6 @@ const Splitter: React.FC<PropsWithChildren<SplitterProps>> & { Panel: typeof Spl
                 const isLast = index === panels.length - 1;
                 const size = panelSizes[index];
                 const isCollapsed = collapsedIndices.has(index);
-
                 const panelStyle: CSSProperties = {
                     ...panel.props.style,
                     flexBasis: size !== undefined ? size : undefined,
@@ -307,71 +333,68 @@ const Splitter: React.FC<PropsWithChildren<SplitterProps>> & { Panel: typeof Spl
                     <div
                         key={`panel-${index}`}
                         className={`
-              ${styles.panel} 
-              ${!isDragging ? styles.transition : ''} 
-              ${isDragging ? styles.dragging : ''}
-              ${isCollapsed ? styles.collapsed : ''}
-              ${panel.props.className || ''}
-            `}
+                            ${styles.panel} 
+                            ${!isDragging ? styles.transition : ''} 
+                            ${isCollapsed ? styles.collapsed : ''}
+                            ${panel.props.className || ''}
+                        `}
                         style={panelStyle}
                     >
                         {panel.props.children}
                     </div>
                 );
 
-                const resizerNode = !isLast && (() => {
-                    const nextPanel = panels[index + 1];
-                    const prevCollapsed = collapsedIndices.has(index);
-                    const nextCollapsed = collapsedIndices.has(index + 1);
-                    // 当 Prev 面板 *没有* 被折叠时，才显示 Prev 按钮（左箭头）
-                    const canCollapsePrev = isCollapsible(index, 'end') && !prevCollapsed;
+                if (isLast) return panelNode;
 
-                    // 当 Next 面板 *没有* 被折叠时，才显示 Next 按钮（右箭头）
-                    const canCollapseNext = isCollapsible(index + 1, 'start') && !nextCollapsed;
+                const nextPanel = panels[index + 1];
+                const prevCollapsed = collapsedIndices.has(index);
+                const nextCollapsed = collapsedIndices.has(index + 1);
+                const showPrevBtn = (isCollapsible(index, 'end') && !prevCollapsed) || (isCollapsible(index + 1, 'start') && nextCollapsed);
+                const showNextBtn = (isCollapsible(index + 1, 'start') && !nextCollapsed) || (isCollapsible(index, 'end') && prevCollapsed);
+                const resizerResizable = panel.props.resizable !== false && nextPanel.props.resizable !== false;
 
-                    const resizerResizable = panel.props.resizable !== false && nextPanel.props.resizable !== false;
+                return [
+                    panelNode,
+                    <div
+                        key={`resizer-${index}`}
+                        className={`
+                            ${styles.resizer} 
+                            ${isHorizontal ? styles.horizontal : styles.vertical}
+                            ${activeResizerIndex === index ? styles.active : ''}
+                        `}
+                        onPointerDown={(e) => resizerResizable && handlePointerDown(e, index)}
+                        onPointerMove={handlePointerMove}
+                        onPointerUp={handlePointerUp}
 
-                    const prevIconRaw = isHorizontal ? '<' : '∧';
-                    const nextIconRaw = isHorizontal ? '>' : '∨';
-                    const prevIcon = prevIconRaw;
-                    const nextIcon = nextIconRaw;
+                        style={{ cursor: !resizerResizable ? 'default' : undefined }}
+                    >
+                        <div className={styles.handle} />
+                        {draggerIcon && <div className={styles['dragger-icon']}>{draggerIcon}</div>}
 
-                    return (
-                        <div
-                            key={`resizer-${index}`}
-                            className={`
-                ${styles.resizer} 
-                ${isHorizontal ? styles.horizontal : styles.vertical}
-                ${activeResizerIndex === index ? styles.active : ''}
-              `}
-                            onMouseDown={(e) => resizerResizable && handleMouseDown(e, index)}
-                            style={{ cursor: !resizerResizable ? 'default' : undefined }}
-                        >
-                            {draggerIcon && <div className={styles['dragger-icon']}>{draggerIcon}</div>}
-
-                            {canCollapsePrev && (
-                                <div
-                                    className={`${styles['collapse-trigger']} ${styles.prev}`}
-                                    onMouseDown={(e) => { e.stopPropagation(); handleCollapse(index, 'prev'); }}
-                                >
-                                    {collapsibleIcon || prevIcon}
-                                </div>
-                            )}
-
-                            {canCollapseNext && (
-                                <div
-                                    className={`${styles['collapse-trigger']} ${styles.next}`}
-                                    onMouseDown={(e) => { e.stopPropagation(); handleCollapse(index, 'next'); }}
-                                >
-                                    {collapsibleIcon || nextIcon}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })();
-
-                return [panelNode, resizerNode];
+                        {showPrevBtn && (
+                            <div className={`${styles['collapse-trigger']} ${styles.prev}`}
+                                onPointerDown={(e) => { e.stopPropagation(); /* 阻止冒泡防止触发拖拽 */ }}
+                                onClick={(e) => { e.stopPropagation(); handleCollapse(index, 'prev'); }}>
+                                {collapsibleIcon || (isHorizontal ? '<' : '∧')}
+                            </div>
+                        )}
+                        {showNextBtn && (
+                            <div className={`${styles['collapse-trigger']} ${styles.next}`}
+                                onPointerDown={(e) => { e.stopPropagation(); }}
+                                onClick={(e) => { e.stopPropagation(); handleCollapse(index, 'next'); }}>
+                                {collapsibleIcon || (isHorizontal ? '>' : '∨')}
+                            </div>
+                        )}
+                    </div>
+                ];
             })}
+
+            {lazy && isDragging && ghostPosition !== null && (
+                <div
+                    className={`${styles['ghost-bar']} ${isHorizontal ? styles.horizontal : styles.vertical}`}
+                    style={{ [isHorizontal ? 'left' : 'top']: ghostPosition }}
+                />
+            )}
         </div>
     );
 };
