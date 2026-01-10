@@ -1,5 +1,3 @@
-
-
 export const messageTypes = ["info", "success", "warning", "error", "loading"] as const;
 export type MessageType = (typeof messageTypes)[number];
 

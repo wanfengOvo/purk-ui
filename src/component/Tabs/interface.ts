@@ -6,4 +6,3 @@ export interface TabItem {
     closable?: boolean;
     disabled?: boolean;
 }
-

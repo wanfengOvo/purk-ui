@@ -4,7 +4,7 @@
     height: 100%;
     overflow: hidden;
     box-sizing: border-box;
-    position: relative;
+    position: relative; // 必须是 relative，作为 ghost-bar 的定位基准
 
     &.vertical {
         flex-direction: column;
@@ -17,8 +17,8 @@
     overflow: auto;
     box-sizing: border-box;
     position: relative;
-    z-index: 1;
-    min-width: 0;
+    z-index: 10; // 【底层】内容层
+    min-width: 0; // 关键：防止 flex 子项无法缩小到 content 之下
     min-height: 0;
 
     &.dragging {
@@ -27,9 +27,15 @@
     }
 
     &.collapsed {
+        // 【关键修复】强制尺寸为 0，防止 padding 或 min-width 撑开导致按钮悬浮
+        flex: 0 0 0px !important;
+        width: 0 !important;
+        height: 0 !important;
         overflow: hidden;
-        padding: 0;
-        border: 0;
+        padding: 0 !important;
+        border: 0 !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
     }
 
     &.transition {
@@ -39,7 +45,7 @@
 
 .resizer {
     position: relative;
-    z-index: 100; 
+    z-index: 50; // 【中层】高于 Panel，低于 Ghost Bar
     flex-shrink: 0;
     background-color: transparent;
     display: flex;
@@ -49,15 +55,63 @@
     user-select: none;
     touch-action: none;
 
+    // 【关键修复】必须允许溢出，否则绝对定位的折叠按钮会被 10px 的宽度裁掉
+    overflow: visible;
+
+    &.collapsed-prev {
+
+        // 既然左边折叠了，隐藏指向左边的“收起”按钮
+        .collapse-trigger.prev {
+            display: none;
+        }
+
+        // 只显示右边的按钮，并把它变成“展开”样式
+        .collapse-trigger.next {
+            display: flex;
+            // 关键：强制定位到 Resizer 的最左边缘，紧贴着分割线
+            left: 0;
+            margin-left: 0;
+            // 样式修饰：变成一个向右突出的标签
+            width: 16px;
+            border-radius: 0 4px 4px 0;
+            z-index: 100;
+        }
+    }
+
+    // 【新增】处理右侧/下方面板折叠的情况
+    &.collapsed-next {
+
+        // 右边折叠了，隐藏指向右边的“收起”按钮
+        .collapse-trigger.next {
+            display: none;
+        }
+
+        // 只显示左边的按钮，并把它变成“展开”样式
+        .collapse-trigger.prev {
+            display: flex;
+            // 关键：强制定位到 Resizer 的最右边缘
+            right: 0;
+            margin-right: 0;
+            // 样式修饰：变成一个向左突出的标签
+            width: 16px;
+            border-radius: 4px 0 0 4px;
+            z-index: 100;
+        }
+    }
+
+    // 【兜底】如果出现 TS 逻辑没盖住的情况，防止两边都折叠时按钮打架
+    &.collapsed-prev.collapsed-next {
+        display: none;
+    }
 
     &::before {
         content: '';
         position: absolute;
-        z-index: 0;
+        z-index: -1;
         background: transparent;
     }
 
-    // 可视化分割线
+    // 可视化分割线 (细线)
     &::after {
         content: '';
         position: absolute;
@@ -68,14 +122,13 @@
 
     &:hover,
     &.active {
-       
         &::after {
             background-color: #1677ff;
         }
     }
 
     &.horizontal {
-        width: 10px;
+        width: 10px; // 实际点击热区
         cursor: col-resize;
 
         &::before {
@@ -86,17 +139,15 @@
         }
 
         &::after {
-            width: 1px;
+            width: 1px; // 视觉线宽度
             height: 100%;
             left: 50%;
             transform: translateX(-50%);
         }
 
-        // 拖拽手柄图标
         .dragger-icon {
-            transform: rotate(90deg); 
+            transform: rotate(90deg);
         }
-
 
         .collapse-trigger {
             top: 50%;
@@ -106,22 +157,21 @@
             border-radius: 0;
 
             &.prev {
-                right: 50%;
-                margin-right: 1px;
+                right: 50%; // 从中心线向左
+                margin-right: 1px; // 避开中间的分割线
                 border-radius: 4px 0 0 4px;
             }
 
             &.next {
-                left: 50%; // 从中心向右
+                left: 50%; // 从中心线向右
                 margin-left: 1px;
                 border-radius: 0 4px 4px 0;
             }
         }
     }
 
-
     &.vertical {
-        height: 10px;
+        height: 10px; // 实际点击热区
         cursor: row-resize;
 
         &::before {
@@ -132,12 +182,11 @@
         }
 
         &::after {
-            height: 1px;
+            height: 1px; // 视觉线高度
             width: 100%;
             top: 50%;
             transform: translateY(-50%);
         }
-
 
         .collapse-trigger {
             left: 50%;
@@ -160,10 +209,9 @@
     }
 }
 
-
 .collapse-trigger {
     position: absolute;
-    z-index: 10;
+    z-index: 20; // 只要比 resizer::after 高即可
     background-color: #fff;
     border: 1px solid #d9d9d9;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -174,15 +222,14 @@
     font-size: 10px;
     color: #888;
     transition: all 0.2s;
-    overflow: hidden;
-
     opacity: 1;
 
+    // 修复 hover 时的层级和颜色
     &:hover {
         background-color: #fafafa;
         color: #1677ff;
         border-color: #1677ff;
-        z-index: 11;
+        z-index: 21;
     }
 }
 
@@ -191,31 +238,31 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    z-index: 5;
+    z-index: 10;
     pointer-events: none;
     color: #bfbfbf;
 }
 
+// 【关键修复】Ghost Bar
 .ghost-bar {
     position: absolute;
-    z-index: 100; // 在最上层
+    z-index: 9999; // 【顶层】必须最高，确保不被 resizer 遮挡
     background-color: #1677ff;
     opacity: 0.5;
-    pointer-events: none;
+    pointer-events: none; // 允许鼠标穿透，不影响下方拖拽操作
 
     &.horizontal {
         top: 0;
         bottom: 0;
-        width: 3px; // 宽度建议和 resizer 保持一致或稍细
-        transform: translateX(-50%); // 居中对齐鼠标位置（假设 ghostPosition 是 resizer 的中心或左边缘）
-        // 如果 ghostPosition 是 left，那其实不需要 transform，看你的 resizer 宽度
-        // 这里的 ghostPosition 实际上是 Resizer 的 left 值，所以宽度最好和 Resizer 一致
+        width: 3px; // 视觉宽度
+        // 修正位置：这里假设 JS 设置的 left 是 Resizer 的左边缘
+        // 如果想让它居中于 Resizer (10px)，需要 transform 或者在 JS 里加 offset
+        // 通常 transform: translateX(0) 配合 JS 计算的准确位置即可
     }
 
     &.vertical {
         left: 0;
         right: 0;
         height: 3px;
-        transform: translateY(-50%);
     }
 }

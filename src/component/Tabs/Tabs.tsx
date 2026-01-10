@@ -1,15 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import styles from './Tabs.module.less';
+import type { TabItem } from './interface';
 
 
-export interface TabItem {
-  key: string;
-  title: string;
-  content?: React.ReactNode;
-  children?: TabItem[];
-  closable?: boolean;
-  disabled?: boolean;
-}
+
 
 interface TabsProps {
   tabs: TabItem[];

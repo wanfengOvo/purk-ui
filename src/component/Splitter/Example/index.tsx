@@ -18,17 +18,15 @@ const SplitterExample: React.FC = () => {
           onResizeEnd={(sizes) => console.log('水平拖拽结束:', sizes)}
         >
           <Splitter.Panel
-            defaultSize="200px"
+            defaultSize="30%"
             min="100px"
-            max="400px"
             style={{ backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             左侧面板
           </Splitter.Panel>
           <Splitter.Panel
-            defaultSize="200px"
+            defaultSize="40%"
             min="100px"
-            max="400px"
             style={{ backgroundColor: '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             右侧面板
@@ -134,6 +132,137 @@ const SplitterExample: React.FC = () => {
             style={{ backgroundColor: '#d0d0d0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             面板3 (左侧可折叠)
+          </Splitter.Panel>
+        </Splitter>
+      </div>
+
+      {/* 测试 resizable 功能 - 一个面板不可拖拽 */}
+      <div>
+        <h2>测试 Resizable 功能</h2>
+        <p>当一个面板设置 <code>resizable={false}</code> 时，分隔条将不可拖拽</p>
+        <Splitter
+          orientation="horizontal"
+          style={{ height: '200px' }}
+          onResize={(sizes) => console.log('可拖拽面板变化:', sizes)}
+          onResizeEnd={(sizes) => console.log('拖拽结束:', sizes)}
+        >
+          <Splitter.Panel
+            defaultSize="200px"
+            min="100px"
+            max="400px"
+            resizable={false} // 此面板不可拖拽
+            style={{ 
+              backgroundColor: '#ffe0e0', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              border: '2px solid red'
+            }}
+          >
+            不可拖拽面板 (红色边框)<br/>resizable=false
+          </Splitter.Panel>
+          <Splitter.Panel
+            defaultSize="200px"
+            min="100px"
+            max="400px"
+            resizable={true} // 此面板可拖拽，但因为对面面板不可拖拽，所以整体不能拖拽
+            style={{ 
+              backgroundColor: '#e0e0ff', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              border: '2px solid blue'
+            }}
+          >
+            可拖拽面板 (蓝色边框)<br/>resizable=true<br/>
+            <small>但由于左侧面板resizable=false，整个分隔条不可拖拽</small>
+          </Splitter.Panel>
+        </Splitter>
+      </div>
+
+      {/* 测试两个面板都可拖拽的情况 */}
+      <div>
+        <h2>测试两个面板都可拖拽</h2>
+        <p>当两个相邻面板都设置 <code>resizable={true}</code> 时，分隔条可拖拽</p>
+        <Splitter
+          orientation="horizontal"
+          style={{ height: '200px' }}
+          onResize={(sizes) => console.log('两个面板都可拖拽:', sizes)}
+          onResizeEnd={(sizes) => console.log('拖拽结束:', sizes)}
+        >
+          <Splitter.Panel
+            defaultSize="200px"
+            min="100px"
+            max="400px"
+            resizable={true} // 此面板可拖拽
+            style={{ 
+              backgroundColor: '#d4edda', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              border: '2px solid green'
+            }}
+          >
+            可拖拽面板 (绿色边框)<br/>resizable=true
+          </Splitter.Panel>
+          <Splitter.Panel
+            defaultSize="200px"
+            min="100px"
+            max="400px"
+            resizable={true} // 此面板也可拖拽
+            style={{ 
+              backgroundColor: '#d1ecf1', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              border: '2px solid green'
+            }}
+          >
+            可拖拽面板 (绿色边框)<br/>resizable=true
+          </Splitter.Panel>
+        </Splitter>
+      </div>
+
+      {/* 测试混合情况 - 第二个面板不可拖拽 */}
+      <div>
+        <h2>测试混合情况</h2>
+        <p>第一个面板可拖拽，第二个面板不可拖拽</p>
+        <Splitter
+          orientation="horizontal"
+          style={{ height: '200px' }}
+          onResize={(sizes) => console.log('混合情况变化:', sizes)}
+          onResizeEnd={(sizes) => console.log('拖拽结束:', sizes)}
+        >
+          <Splitter.Panel
+            defaultSize="200px"
+            min="100px"
+            max="400px"
+            resizable={true} // 此面板可拖拽
+            style={{ 
+              backgroundColor: '#e0e0ff', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              border: '2px solid blue'
+            }}
+          >
+            可拖拽面板 (蓝色边框)<br/>resizable=true
+          </Splitter.Panel>
+          <Splitter.Panel
+            defaultSize="200px"
+            min="100px"
+            max="400px"
+            resizable={false} // 此面板不可拖拽
+            style={{ 
+              backgroundColor: '#ffe0e0', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              border: '2px solid red'
+            }}
+          >
+            不可拖拽面板 (红色边框)<br/>resizable=false<br/>
+            <small>由于此面板resizable=false，整个分隔条不可拖拽</small>
           </Splitter.Panel>
         </Splitter>
       </div>
