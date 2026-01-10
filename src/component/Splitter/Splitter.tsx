@@ -10,7 +10,7 @@ import React, {
     type CSSProperties,
 } from 'react';
 import styles from './Splitter.module.less';
-import { pxToNumber, parseSize } from '../../utils/util'; // 确保路径正确
+import { pxToNumber, parseSize } from '../../utils/util';
 import type { CollapsibleType, Orientation } from './interface';
 
 export interface PanelProps {
@@ -31,7 +31,7 @@ export interface SplitterProps {
     draggerIcon?: React.ReactNode;
     onCollapse?: (index: number, collapsed: boolean) => void;
     orientation?: Orientation;
-    onResize?: (sizes: (number | string)[]) => void; // 注意：返回类型改了，可能包含百分比
+    onResize?: (sizes: (number | string)[]) => void;
     onResizeEnd?: (sizes: (number | string)[]) => void;
     onResizeStart?: (sizes: (number | string)[]) => void;
     lazy?: boolean;
@@ -134,7 +134,7 @@ const Splitter: React.FC<PropsWithChildren<SplitterProps>> & { Panel: typeof Spl
     }, [panels, isDragging]); // 依赖 isDragging
 
 
-    // --- 2. 辅助函数：获取 Flex 样式 ---
+
     const getPanelStyle = (index: number, size: number | string | undefined, isCollapsed: boolean): CSSProperties => {
         if (isCollapsed) return {}; // CSS class handles display:none/width:0
 
@@ -158,15 +158,12 @@ const Splitter: React.FC<PropsWithChildren<SplitterProps>> & { Panel: typeof Spl
         }
     };
 
-    // --- 3. 约束计算 (Min/Max) ---
-    // 注意：这里我们需要把所有的约束都转成 PX 来做判断
     const getConstrainedPx = (targetIndex: number, newSizePx: number, totalSize: number): number => {
         const panelProps = panels[targetIndex]?.props;
         if (!panelProps) return newSizePx;
 
         const minPx = pxToNumber(panelProps.min, totalSize) || 0; // 默认为0
 
-        // max 稍微复杂，如果没有设置 max，理论上是无限大，但受限于容器
         let maxPx = totalSize;
         if (panelProps.max !== undefined) {
             maxPx = pxToNumber(panelProps.max, totalSize);
@@ -175,8 +172,6 @@ const Splitter: React.FC<PropsWithChildren<SplitterProps>> & { Panel: typeof Spl
         return Math.max(minPx, Math.min(maxPx, newSizePx));
     };
 
-
-    // --- 4. 拖拽处理 ---
 
     const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>, index: number) => {
         if (!containerRef.current) return;
@@ -192,7 +187,7 @@ const Splitter: React.FC<PropsWithChildren<SplitterProps>> & { Panel: typeof Spl
         const currentNodes = containerRef.current.children;
         const startSizesPx: number[] = [];
 
-        // 这里的 DOM 结构是 [Panel, Resizer, Panel, Resizer...]
+        // DOM 结构是 [Panel, Resizer, Panel, Resizer...]
         // Panel 的索引对应 DOM 的 index * 2
         panels.forEach((_, idx) => {
             const node = currentNodes[idx * 2] as HTMLElement;
@@ -228,7 +223,7 @@ const Splitter: React.FC<PropsWithChildren<SplitterProps>> & { Panel: typeof Spl
         if (!isDragging || !dragRef.current) return;
         e.preventDefault();
 
-        // 使用 requestAnimationFrame 节流，解决"疯狂触发"和性能问题
+        // 使用 requestAnimationFrame 节流
         if (requestRef.current) cancelAnimationFrame(requestRef.current);
 
         const currentPos = isHorizontal ? e.clientX : e.clientY;
@@ -240,41 +235,28 @@ const Splitter: React.FC<PropsWithChildren<SplitterProps>> & { Panel: typeof Spl
             const delta = currentPos - startX;
             const prevIdx = index;
             const nextIdx = index + 1;
-
-            // 1. 计算原本的像素值
             const startPrevPx = startSizesPx[prevIdx];
             const startNextPx = startSizesPx[nextIdx];
-
-            // 2. 计算期望的像素值
             let newPrevPx = startPrevPx + delta;
             let newNextPx = startNextPx - delta;
-
-            // 3. 应用约束 (Min/Max)
-            // 先约束左边
             const constrainedPrevPx = getConstrainedPx(prevIdx, newPrevPx, totalSize);
-            // 重新计算 delta (因为左边可能被限制了)
             const validDelta = constrainedPrevPx - startPrevPx;
 
-            // 根据新的 delta 计算右边
+
             let constrainedNextPx = startNextPx - validDelta;
-            // 约束右边
+
             constrainedNextPx = getConstrainedPx(nextIdx, constrainedNextPx, totalSize);
 
-            // 最终的有效像素大小
+
             const finalNextPx = constrainedNextPx;
             const finalPrevPx = startPrevPx + (startNextPx - finalNextPx); // 保证总和不变
 
-            // 4. 将像素值转换回原本的单位 (关键步骤)
+
             const convertBack = (pxVal: number, originalUnitVal: number | string): number | string => {
                 const { type } = parseSize(originalUnitVal);
                 if (type === 'px') {
                     return pxVal;
                 } else {
-                    // 如果原本是百分比/比例
-                    // 我们需要计算现在的像素占"参与分配的总像素"的比例，或者直接转回相对于容器的百分比
-                    // 简单的策略：直接转回相对于总容器的百分比
-                    // 这样 "30%" 变成 "31.5%"
-                    // 注意保留精度，否则多次拖拽会有误差
                     return parseFloat(((pxVal / totalSize) * 100).toFixed(2)) + '%';
                 }
             };
